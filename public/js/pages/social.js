@@ -31,17 +31,11 @@ import { originsOf, predicatesOf, dashDerived, augmentNote, scorecardSwitch, edg
 
 export const meta = {
   id: 'social',
-  nav: 'Social graph',
-  group: 'What it recorded',
-  kicker: 'Who knows whom',
-  title: 'Who your Mac links to whom: the graph as the store keeps it, and the circles iOwl finds in it',
-  blurb: 'The store holds a group entity with its members, the people invited to each calendar event, '
-       + 'a family-and-friends score per person in its kinship scorecard, and a log of message '
-       + 'metadata in its interaction log. The graph draws the store’s rows as they are, with the '
-       + 'scorecard on top. Everything marked iOwl’s analysis is this app’s own work over those rows, '
-       + 'stored nowhere: it clusters shared invitations into meeting circles and group chats into '
-       + 'chat clusters, at cuts you can move, and opens any circle to its members and the evidence '
-       + 'behind it.',
+  nav: "Who connects to whom",
+  group: "What the Mac kept",
+  kicker: "Who connects to whom",
+  title: "How your Mac links people to each other: the store’s own links, and the circles iOwl finds among them",
+  blurb: "The store keeps a group entity and its members, the invitees of each calendar event, a family-and-friends score for each person, and message metadata in its interaction log. The graph shows those rows as stored, with the scores layered on top. Anything labeled iOwl’s analysis is computed here and saved nowhere: it groups shared invitations into meeting circles and group chats into chat clusters, at thresholds you can adjust, and opens any circle to show who is in it and why.",
 };
 
 /* ---------- static UI copy and API bounds. No row values live here. ---------- */

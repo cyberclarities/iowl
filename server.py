@@ -177,24 +177,23 @@ LOCKED_HTML = """<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
-<title>iOwl · open the link from the terminal</title>
+<title>iOwl · use the link from Terminal</title>
 <link rel="icon" href="data:image/svg+xml;base64,{icon}">
 <style>{css}</style>
 </head>
 <body>
 <main>
   <div class="brand">{logo}<span>iOwl</span></div>
-  <h1>Open the link from the terminal</h1>
-  <p>iOwl opens only for the link it printed when it started. The link carries
-  an access token, so other programs on this Mac, other accounts on it, and web
-  pages in your browser cannot read what this page shows.</p>
-  <p>Look in the terminal where you ran <code>python3 server.py</code>:</p>
-  <pre>  open this link to read the store:
+  <h1>Use the link from Terminal</h1>
+  <p>iOwl answers only the link it printed at startup. That link holds an
+  access token, which keeps other programs and accounts on this Mac, and any
+  website open in your browser, from reading this page.</p>
+  <p>In the window where you ran <code>python3 server.py</code>, look for:</p>
+  <pre>  open this link in your browser:
 
   <b>http://127.0.0.1:{port}/?token=…</b></pre>
-  <p class="note">Each start prints a new token. If the server has been
-  restarted, the old link and every tab opened from it stop working; open the
-  new link.</p>
+  <p class="note">Every start issues a new token. After a restart, the old
+  link and any tab opened from it stop working, so open the new one.</p>
 </main>
 </body>
 </html>
@@ -283,8 +282,8 @@ class Handler(BaseHTTPRequestHandler):
         if path.startswith("/api/"):
             return self._send(401, json.dumps({
                 "error": "no token",
-                "detail": "open the link server.py printed when it started, "
-                          "or send its token as 'Authorization: Bearer <token>'",
+                "detail": "use the link server.py printed at startup, or send its "
+                          "token in an 'Authorization: Bearer <token>' header",
             }), "application/json; charset=utf-8", extra)
         return self._send(401, LOCKED, "text/html; charset=utf-8", extra, csp=LOCKED_CSP)
 
@@ -318,7 +317,7 @@ class Handler(BaseHTTPRequestHandler):
         # endpoints exist.
         if self.headers.get("Host", "").lower() not in HOSTS:
             port = self.server.server_address[1]
-            return self._send(403, f"iOwl answers only at http://127.0.0.1:{port}/\n",
+            return self._send(403, f"iOwl is only available at http://127.0.0.1:{port}/\n",
                               "text/plain; charset=utf-8")
         offered = query.pop("token", [None])[0]
         if not self._has_token(offered):
@@ -419,24 +418,24 @@ def _probe(path):
 
 
 FDA = """
-  macOS denied one or more of those reads. These stores are TCC-protected, so
-  the program doing the reading needs Full Disk Access:
+  macOS blocked at least one of those reads. The stores sit behind macOS
+  privacy controls, so whatever reads them needs Full Disk Access:
 
       System Settings → Privacy & Security → Full Disk Access
 
-  Add the terminal you started this from (Terminal, iTerm, your editor), or the
-  python3 binary itself, then quit that app fully and start it again — the
-  permission is picked up at launch, not while running.
+  Add the app you launched this from (Terminal, iTerm, your editor), or the
+  python3 binary itself. Then quit that app completely and open it again:
+  macOS only checks the permission when the app starts.
 """
 
 FDA_OFF = """
-  If you turned on Full Disk Access just to run this, you can turn it off now:
+  If you granted Full Disk Access only for iOwl, now is the time to take it back:
 
       System Settings → Privacy & Security → Full Disk Access
 
-  Switch off the app you started this from. The permission covers everything
-  you run from that app, not only this server. Turn it back on the next time
-  you run iOwl.
+  Turn off the app you launched this from. The permission applies to
+  everything you run in that app, not just iOwl, so grant it again only when
+  you next need it.
 """
 
 
@@ -482,9 +481,9 @@ def preflight():
     if denied:
         print(FDA, file=sys.stderr)
     if not ok and not denied:
-        print("  Point --graph at a directory holding graph.db, or --bundle at an",
+        print("  Use --graph for a folder that holds graph.db, or --bundle for an",
               file=sys.stderr)
-        print("  extracted copy with graph/ ontology/ sources/ inside it.\n", file=sys.stderr)
+        print("  extracted copy laid out as graph/, ontology/ and sources/.\n", file=sys.stderr)
     return ok
 
 
@@ -517,7 +516,7 @@ def main():
                  sources=args.sources)
     _more_files()
 
-    print("\n  Apple personal knowledge graph — local viewer")
+    print("\n  iOwl · what this Mac knows, read locally")
     print("  " + "-" * 52)
     if not preflight():
         sys.exit(1)
@@ -534,11 +533,11 @@ def main():
     httpd.daemon_threads = True
     link = mint(httpd.server_address[1])
 
-    print("\n  open this link to read the store:\n")
+    print("\n  open this link in your browser:\n")
     print(f"  {link}\n")
-    print("  the token in it is new each start; without it the page stays shut")
-    print("  loopback only · read-only · nothing leaves this machine")
-    print("  ctrl-c to stop\n")
+    print("  the link carries a one-time token; a restart issues a new one")
+    print("  local only · read-only · nothing is sent anywhere")
+    print("  press ctrl-c to stop\n")
     # stdout is block-buffered when it is not a terminal, and the line above is
     # the one the reader actually needs. Flush it rather than let it sit in a
     # buffer until the process exits.

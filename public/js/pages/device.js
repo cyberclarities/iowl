@@ -31,11 +31,11 @@ import { h, figure, statTile, bars, columns, stackedBar, hero, legend,
 
 export const meta = {
   id: 'device',
-  nav: 'Installed apps',
-  group: 'The machinery',
-  kicker: 'Installed applications',
-  title: 'Every app on this Mac is written down in plain text',
-  blurb: 'The graph lists the apps on this Mac by bundle id. Where it adds a token beside each one, this page re-derives it in your browser from the public id.',
+  nav: "App inventory",
+  group: "Under the hood",
+  kicker: "App inventory",
+  title: "The graph names every app installed on this Mac, in plain text",
+  blurb: "Apps are listed by bundle id. Where the graph also keeps a token next to an app, this page recomputes that token in your browser from the public id, to test whether it hides anything.",
 };
 
 /* ------------------------------------------------------------------ rules

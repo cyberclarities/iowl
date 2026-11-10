@@ -38,7 +38,7 @@ import * as reports from './pages/reports.js';
 const PAGES = [home, reports, kinship, faces, certainty, social, comms, calendar,
                identity, retractions, overview, device, exposure];
 
-const GROUPS = ['Start here', 'What it concluded', 'What it recorded', 'The machinery'];
+const GROUPS = ['Overview', 'What the Mac guessed', 'What the Mac kept', 'Under the hood'];
 
 /* ---------- redaction ---------- */
 
@@ -144,34 +144,31 @@ function drawGaps({ slot, items }) {
   const missing = all.filter(g => g.kind !== 'redact');
   const notes = [];
   if (missing.length) {
-    notes.push('iOwl could not read everything this page draws on. Whatever depends on the lines below '
-             + 'is shown empty or as zero, and that is not a measurement.');
+    notes.push('Part of what this page depends on could not be read. Anything built on the stores listed '
+             + 'below shows as empty or zero, and that zero was not measured.');
   }
   if (kinds.has('query')) {
-    notes.push('Apple adds and renames columns between macOS releases, so a store on this Mac can have a '
-             + 'different shape from the one iOwl was written against.');
+    notes.push('macOS adds and renames columns from one release to the next, so a store on this Mac may not '
+             + 'match the layout iOwl expects.');
   }
   if (kinds.has('denied')) {
-    notes.push('A store macOS would not open usually means the terminal running server.py lacks Full Disk Access.');
+    notes.push('When macOS refuses to open a store, the usual cause is that the app running server.py has not '
+             + 'been given Full Disk Access.');
   }
   if (kinds.has('redact')) {
-    notes.push('With “Redact for sharing” on, what the sources below hold is not replaced on this page.');
+    notes.push('Share-safe mode is on, but the sources below could not be read, so anything they hold is not '
+             + 'replaced on this page.');
   }
   const box = h('div', { class: 'callout callout-warning data-gaps', role: 'status' }, [
     h('div', { class: 'callout-icon', text: '!' }),
     h('div', {}, [
-      h('h4', { text: missing.length ? 'Some of this page may be missing' : 'Redaction may be incomplete' }),
+      h('h4', { text: missing.length ? 'Part of this page may be missing' : 'Share-safe mode may not be complete' }),
       ...notes.map(t => h('p', { text: t })),
       h('ul', {}, all.map(g => h('li', {}, [
         h('span', { class: 'mono', text: g.store }),
         h('span', { text: ` — ${g.detail}` }),
       ]))),
-      h('p', {}, [
-        h('span', { text: 'If this looks wrong, ' }),
-        h('a', { href: 'https://github.com/8rank/iKnow/issues', target: '_blank', rel: 'noopener noreferrer',
-                 text: 'open an issue on GitHub' }),
-        h('span', { text: ' with these lines and your macOS version.' }),
-      ]),
+      h('p', { text: 'If this looks wrong, report it with these lines and your macOS version.' }),
     ]),
   ]);
   slot.replaceChildren(box);
@@ -215,9 +212,9 @@ function buildNav() {
     }, [
       h('span', { class: 'redact-track', 'aria-hidden': 'true' }, [h('span', { class: 'redact-knob' })]),
       h('span', { class: 'redact-text' }, [
-        h('span', { class: 'redact-label', text: 'Redact for sharing' }),
+        h('span', { class: 'redact-label', text: 'Share-safe mode' }),
         h('span', { class: 'redact-sub', text:
-          'Names, phone numbers and addresses become stand-ins; photographs are blurred. '
+          'Swaps names, phone numbers and addresses for placeholders and blurs photos. '
           + 'Every count and link stays as it is.' }),
       ]),
     ]),
@@ -262,7 +259,7 @@ async function route() {
   ledger = { slot, items: new Map() };
 
   const body = h('div');
-  body.appendChild(h('div', { class: 'loading', text: 'reading the store…' }));
+  body.appendChild(h('div', { class: 'loading', text: 'reading this Mac…' }));
   view.appendChild(body);
   scrollTo(0, 0);
 
@@ -275,7 +272,7 @@ async function route() {
     if (mine !== token) return;
     console.error(err);
     const box = h('div', { class: 'error' });
-    box.appendChild(h('strong', { text: 'This page could not be built. ' }));
+    box.appendChild(h('strong', { text: 'This page failed to load. ' }));
     box.appendChild(h('span', { text: String(err.message || err) }));
     body.replaceWith(box);
   }
@@ -289,6 +286,10 @@ async function boot() {
   addEventListener('hashchange', route);
   route();
 
+  api('version')
+    .then(v => { document.getElementById('brand-version').textContent = `v${v.version}`; })
+    .catch(() => {});
+
   try {
     const o = await api('overview');
     const sub = document.getElementById('brand-sub');
@@ -297,7 +298,7 @@ async function boot() {
     if (o.triples) parts.push(`${o.triples.toLocaleString('en-US')} facts`);
     sub.textContent = parts.join(' · ') || 'local store';
   } catch {
-    document.getElementById('brand-sub').textContent = 'store unavailable';
+    document.getElementById('brand-sub').textContent = 'store not readable';
   }
 }
 

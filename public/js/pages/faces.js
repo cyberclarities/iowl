@@ -33,13 +33,11 @@ import { openCluster, clusterFace } from '../facedrawer.js';
 
 export const meta = {
   id: 'faces',
-  nav: 'The face index',
-  group: 'What it concluded',
-  kicker: 'Photo face clusters',
-  title: 'Your Mac keeps a face index of the people in your photo library',
-  blurb: 'The reference that binds a person in the graph to a face cluster in Photos is plaintext, '
-       + 'not a hash, so iOwl can join them with one string comparison. This page counts how many of '
-       + 'those faces have a name, and draws who appears in photos with whom (iOwl’s analysis).',
+  nav: "Faces",
+  group: "What the Mac guessed",
+  kicker: "Faces in Photos",
+  title: "Your Mac keeps an index of the faces in your photo library",
+  blurb: "A person in the graph is tied to a Photos face group by a plain, readable reference rather than a hash, so iOwl can match the two with a single string comparison. This page counts how many of those faces carry a name and maps who shows up in photos together (iOwl’s analysis).",
 };
 
 /* ---------- formatting only. No value is written in this file. ---------- */

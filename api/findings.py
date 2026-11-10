@@ -35,8 +35,9 @@ import sys
 import time
 
 from . import biome, catalog, db
+from .version import VERSION as _NUMBER
 
-VERSION = "iOwl 0.1"
+VERSION = f"iOwl {_NUMBER}"
 
 GRAPH = "graph/graph.db"
 SIRI = "graph/Artifacts__siri__remembers__view.db"

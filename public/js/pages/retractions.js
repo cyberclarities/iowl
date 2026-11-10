@@ -19,13 +19,11 @@ import { withdrawnGraph } from '../withdrawngraph.js';
 
 export const meta = {
   id: 'retractions',
-  nav: 'The retraction archive',
-  group: 'What it recorded',
-  kicker: 'Retained retractions',
-  title: 'When the graph withdraws a fact, the row is not deleted — it moves to a table with no primary key, until a prune removes it',
-  blurb: 'When the graph stops asserting a fact, it moves the row to an expired table, with the confidence and ' +
-         'sources it had. Rows stay there until a prune removes them. This page sorts them by what the live graph ' +
-         'still holds.',
+  nav: "Withdrawn facts",
+  group: "What the Mac kept",
+  kicker: "Withdrawn facts",
+  title: "A withdrawn fact is not deleted. It moves to a holding table with no primary key and waits there for the next prune.",
+  blurb: "When the graph stops asserting something, the row moves into an expired table along with the confidence and sources it carried, and stays there until a prune clears it. This page groups those rows by what the live graph still holds.",
 };
 
 /* ---------- local helpers ---------- */

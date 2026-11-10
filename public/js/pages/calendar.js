@@ -31,11 +31,11 @@ import { h, figure, statTile, bars, columns, lines, stackedBar, hero, legend,
 
 export const meta = {
   id: 'calendar',
-  nav: 'The calendar',
-  group: 'What it recorded',
-  kicker: 'The forward-looking layer',
-  title: 'Your graph holds your meetings, including the ones still ahead: when, where, and who is invited',
-  blurb: 'For each meeting it keeps the time, the place, the people invited and the dial-in number. Many of those meetings include other people, who may not know this is kept.',
+  nav: "Calendar",
+  group: "What the Mac kept",
+  kicker: "The calendar layer",
+  title: "Your meetings are in the graph, past and upcoming, with who was invited and where",
+  blurb: "Each meeting carries its time, its place, its invitees and any dial-in details. Most meetings involve other people, who probably don’t know this record exists.",
 };
 
 /* ---------- presentation helpers (no values, only shapes) ---------- */

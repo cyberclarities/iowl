@@ -19,16 +19,11 @@ import { h, figure, bars, stackedBar, hero, legend, tableView,
 
 export const meta = {
   id: 'overview',
-  nav: 'The store',
-  group: 'The machinery',
-  kicker: 'The file itself',
-  title: 'One file holds the join: Contacts records, handles, face clusters, the family circle, '
-       + 'the calendar and the installed apps, resolved onto single entities',
-  blurb: 'What the store models, by entity type; two real rows expanded into every namespace they '
-       + 'reach, with the facets as stored and the confidence attached; every namespace the file '
-       + 'points into, tested against the source stores on this Mac; and how far the identity join '
-       + 'actually reaches on this device. Everything is counted from the file the moment you open '
-       + 'this page.',
+  nav: "The database",
+  group: "Under the hood",
+  kicker: "The database file",
+  title: "A single file ties it together: contacts, phone numbers and mail addresses, face groups, the family circle, the calendar and installed apps, each resolved onto one entity",
+  blurb: "Opening this page counts the file from scratch: what kinds of things it describes; two real rows followed into every store they point at, with facets and confidence as stored; each outside store it references and whether that reference still works on this Mac; and how much of the identity linking actually connects.",
 };
 
 /* ---------- small helpers ---------- */

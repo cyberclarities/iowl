@@ -16,14 +16,11 @@ import { h, figure, statTile, bars, columns, heatmap, stackedBar, hero, legend,
 
 export const meta = {
   id: 'exposure',
-  nav: 'Who else reads it',
-  group: 'The machinery',
-  kicker: 'The control plane',
-  title: '"It is on my device" is not the same as "only I can see it": this graph is read by a fleet of separate views, copied into other files, and some of the views around it are fed by your other devices',
-  blurb: 'The personal graph is the first copy, not the only one. This page maps the derived views that hold a standing ' +
-         'subscription on it, the addresses they name in other subsystems, the projection tables that hold the ' +
-         'same facts over again, the streams that arrive from your other devices, and the parts that are set up ' +
-         'but empty.',
+  nav: "Readers and copies",
+  group: "Under the hood",
+  kicker: "Who reads the graph",
+  title: "Kept on your Mac is not the same as seen only by you. Other parts of macOS read this graph, copy it into further files, and take in data from your other devices.",
+  blurb: "The graph is where the data starts, not where it ends. This page lists the views that subscribe to it, the other subsystems those views point at, the tables that store the same facts again, the streams that come in from your other devices, and the pieces that exist but hold nothing yet.",
 };
 
 /* ---------- local helpers ---------- */

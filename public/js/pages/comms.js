@@ -13,13 +13,11 @@ import {
 
 export const meta = {
   id: 'comms',
-  nav: 'Who you talked to',
-  group: 'What it recorded',
-  kicker: 'Communication metadata',
-  title: 'It keeps a log of who you talked to, when, and on which app — but not what was said',
-  blurb: 'No message text is stored in this file. Volume, direction and timing alone rank the people you '
-       + 'talk to most, show the hours you go quiet (which might be used to infer when you sleep), and show '
-       + 'which app you use with each person.',
+  nav: "Contact log",
+  group: "What the Mac kept",
+  kicker: "Messages and calls, metadata only",
+  title: "A running log of who you contacted, when, and with which app. The words themselves are not kept.",
+  blurb: "This store holds no message text. Even so, counts, direction and timing are enough to rank your most frequent contacts, show the hours you go silent (which can hint at when you sleep), and show which app you use for each person.",
 };
 
 /* ---------- small local helpers (formatting only, never data) ---------- */

@@ -1,344 +1,354 @@
-# Manual for your agent
+# iOwl guide for AI agents
 
-> **iOwl note.** This manual is iKnow's, kept as written. iOwl serves the same
-> pages and adds two endpoints: `/api/findings` (the findings, every number with
-> its query) and `/api/report?kind=brief|technical` (the two reports as HTML).
-> Both are counts only. Section 0 still applies before you read anything.
+This guide is for an AI agent with a shell on a Mac whose owner wants to know
+what macOS's personal knowledge graph holds about them. Read section 1 and do
+what it says before anything else. Read section 9 before you write a query.
 
-For an AI agent with a shell on a Mac whose owner asks about the knowledge graph
-macOS keeps on them. Do §0 first, then read §1 and §8 before running anything.
-The schemas are Apple's and change between releases (this was checked on macOS
-26): confirm tables and columns with `.schema`. Every id, name and handle here
-is a placeholder.
+Apple does not document these stores and changes them between releases. The
+details below were checked on macOS 26 and 27. Confirm any table or column with
+`.schema` before you rely on it. Every id, name and number shown here is a
+placeholder.
 
----
-
-## 0. Stop and ask first
-
-**Mandatory, before anything else.**
-
-What you read from these stores enters your context and goes to whoever runs
-your model. The stores hold the owner's relationships, contacts,
-correspondents, calendar and photos, plus scored guesses about people who never
-agreed to any of it. Whether your provider may see that is the owner's call,
-made before you read a row.
-
-First tell the owner: (1) which model and provider you are, as far as you
-actually know, and if you don't know, say so; (2) that what you read goes to
-that provider and may be logged or kept under terms you cannot inspect or
-enforce; (3) what their question will make you read: names, phone numbers, mail
-addresses, relationship scores, who they talk to and when, calendar entries,
-possibly message text.
-
-**Then ask this, word for word, and wait for the answer:**
-
-> Are you running a trusted LLM provider that you are sure will not abuse the
-> knowledge of your local knowledge graph? (yes / no)
-
-- **Ask even if the request already sounds like consent.** The answer must come
-  in reply to the question.
-- **Until the answer is yes, read nothing**: no `sqlite3`, no Python against the
-  stores, no iKnow API call, not even the §2.1 check.
-- **Only an explicit yes counts**: "yes", "sure" or "go ahead" in reply. Silence,
-  a new question or "I think so" is not one: ask again or stop.
-- **On no, stop.** Offer iKnow in the browser (`python3 server.py`, then the
-  link it prints), which sends nothing off the machine, or this manual with a
-  local model.
-- **Ask once per session**, and again if the owner changes model or provider.
+The facts in this guide were first worked out by the iKnow project
+(github.com/8rank/iKnow), which iOwl is built on.
 
 ---
 
-## 1. Rules
+## 1. Get consent before you read anything
 
-1. **Read-only.** Open every database as `file:…?mode=ro`:
-   `sqlite3 "file:$HOME/Library/IntelligencePlatform/graph.db?mode=ro"`. Never
-   write (`INSERT`, `UPDATE`, `DELETE`, `CREATE`, `VACUUM`,
-   `PRAGMA wal_checkpoint`, `PRAGMA journal_mode`); daemons write to these
-   files while you read.
-2. **`ATTACH` with a `mode=ro` URI**: `ATTACH 'file:/path/x.db?mode=ro' AS x`. A
-   plain path opens read-write even from a read-only handle.
-3. **No `immutable=1`.** It skips the write-ahead log, which holds the newest
-   facts. If a read fails, report it.
-4. **Copy nothing to disk**, and put no row values in files, commits, issues or
-   web requests. Answers go to the owner, in the conversation.
-5. **Read as little as the question needs.** Prefer counts and filtered rows;
-   ask before pulling whole tables of names, handles or message text.
-6. **Other people are in here.** Answer what the owner asks; don't volunteer
-   profiles of anyone else.
-7. **Measure, don't repeat.** Where this manual gives a test, run it rather
-   than trusting the value written here.
+Anything you read from these stores lands in your context, and your context
+goes to whoever runs your model. These stores describe the owner's
+relationships, contacts, conversations, calendar and photos, and they also hold
+scored guesses about other people, none of whom agreed to any of it. Only the
+owner can decide whether your provider gets to see that.
+
+Before your first read, tell the owner three things:
+
+1. Which model and provider you are, as far as you actually know. If you don't
+   know, say so.
+2. That what you read is sent to that provider, which may log or keep it under
+   terms neither of you can check.
+3. What their question will make you read: names, numbers, addresses,
+   relationship scores, who they talk to and when, calendar entries, and
+   possibly message text.
+
+Then ask this question and wait for the answer:
+
+> Do you trust the provider running me with the contents of your Mac's
+> knowledge graph? (yes / no)
+
+- Ask even when the request already sounds like permission. The yes must come
+  as an answer to this question.
+- Until you have a yes, read nothing: no `sqlite3`, no Python against the
+  stores, no iOwl endpoint, not even the access check in section 3.
+- Only a plain yes counts ("yes", "go ahead", "sure"). Silence, a new question
+  or "I think so" does not. Ask again or stop.
+- On a no, stop. Point the owner to iOwl in the browser
+  (`python3 server.py`, then the printed link), which sends nothing off the
+  Mac, or to this guide with a model that runs locally.
+- Ask once per session, and again if the owner switches model or provider.
 
 ---
 
-## 2. Access
+## 2. Ground rules
 
-### 2.1 Full Disk Access
+1. **Never write to a store.** Open every database read-only with a `file:`
+   URI and `mode=ro`:
+   `sqlite3 "file:$HOME/Library/IntelligencePlatform/graph.db?mode=ro"`.
+   No `INSERT`, `UPDATE`, `DELETE`, `CREATE`, `VACUUM`, `PRAGMA wal_checkpoint`
+   or `PRAGMA journal_mode`. System daemons write to these files while you read.
+2. **Attach read-only too.** `ATTACH 'file:/path/x.db?mode=ro' AS x`. A plain
+   path in `ATTACH` opens read-write, even from a read-only connection.
+3. **Do not use `immutable=1`.** It ignores the write-ahead log, which is where
+   the newest facts live. If a read fails, report the failure.
+4. **Copy nothing to disk.** No row values in files, commits, issues or web
+   requests. Answers go to the owner in the conversation and nowhere else.
+5. **Read the minimum.** Counts and filtered rows first. Ask before pulling
+   whole tables of names, handles or message text.
+6. **Other people are in here.** Answer what the owner asked. Don't build
+   profiles of anyone else unprompted.
+7. **Measure rather than repeat.** Where this guide gives a test, run it. A
+   value written here is a starting point, not an answer.
 
-TCC protects the stores. Add the app running your shell (Terminal, iTerm,
-VS Code, the Claude desktop app, …) under System Settings → Privacy & Security
-→ Full Disk Access, then quit and reopen it. Without it, opening fails with
-`unable to open database file`: a permission problem, not a missing file. A
-sandboxed agent also needs read access to `~/Library/IntelligencePlatform`,
-`~/Library/Messages`, `~/Library/Group Containers/group.com.apple.calendar`,
-`~/Library/Application Support/AddressBook` and `~/Pictures`.
+---
+
+## 3. Start with iOwl
+
+If the owner can run iOwl, use it first. Its endpoints return counts, every
+number comes with the query that produced it, and nothing personal is read to
+produce them.
+
+Ask the owner to run `python3 server.py` in the iOwl folder and give you the
+token from the link it prints. It changes on every start; a `401` means the
+server restarted. Then:
+
+| Endpoint | What it returns |
+|---|---|
+| `/api/findings` | Every measurement, every finding with evidence and actions, what could not be measured, and the SQL behind each number |
+| `/api/findings?terms=a,b` | The same, plus watchlist counts for each term |
+| `/api/report?kind=brief` | The high-level brief, as HTML |
+| `/api/report?kind=technical` | The technical report, as HTML |
+| `/api/version` | iOwl's version |
+
+```sh
+curl -s -H "Authorization: Bearer $TOKEN" http://127.0.0.1:8765/api/findings
+```
+
+Each viewer page also has JSON at `/api/<page>` (`overview`, `identity`,
+`person?id=`, `kinship`, `comms`, `calendar`, `social`, `faces`, `certainty`,
+`retractions`, `device`, `exposure`). These can return names. Add `redact=1`
+to swap names, numbers and addresses for numbered placeholders, especially if
+the owner plans to share what you write.
+
+### Access check
+
+Without iOwl, or for a question it doesn't answer, confirm you can read the
+graph at all. The app running your shell needs Full Disk Access (System
+Settings › Privacy & Security › Full Disk Access, then quit and reopen the
+app). Without it, opening fails with `unable to open database file`, which
+here means "permission denied", not "file missing".
 
 ```sh
 sqlite3 "file:$HOME/Library/IntelligencePlatform/graph.db?mode=ro" \
   "select count(*) from stable_graph" && echo readable
 ```
 
-When the owner is done, remind them they can switch Full Disk Access off again:
-it covers everything run from that app.
+When the owner is finished, remind them to switch Full Disk Access off. It
+covers everything run from that app.
 
-### 2.2 Where everything is
+---
 
-| What | Path |
+## 4. Where things are
+
+| Store | Path |
 |---|---|
-| Graph and its projections | `~/Library/IntelligencePlatform/` |
-| Ontology (SQLite) | `~/Library/IntelligencePlatform/ontology.db` |
-| Ontology (JSON) | `Resources/` in `IntelligencePlatformCore.framework`, under `/System/Library/PrivateFrameworks/` |
+| The graph and its derived stores | `~/Library/IntelligencePlatform/` |
+| Code book for the graph (SQLite) | `~/Library/IntelligencePlatform/ontology.db` |
+| Code book (JSON) | `Resources/` inside `/System/Library/PrivateFrameworks/IntelligencePlatformCore.framework` |
 | Messages | `~/Library/Messages/chat.db` |
 | Calendar | `~/Library/Group Containers/group.com.apple.calendar/Calendar.sqlitedb` |
-| Contacts (one per account) | `~/Library/Application Support/AddressBook/Sources/<source>/AddressBook-v22.abcddb` |
+| Contacts, one per account | `~/Library/Application Support/AddressBook/Sources/<source>/AddressBook-v22.abcddb` |
 | Photos | `~/Pictures/<library>.photoslibrary/database/Photos.sqlite` |
 
-### 2.3 Opening stores
+Inside `~/Library/IntelligencePlatform/` (ignore any `-fullRebuild` copies,
+which are staging files):
 
-Start `sqlite3` from `~/Library/IntelligencePlatform`: the recipes use relative
-`file:` paths, and SQL doesn't expand `~`. Bind `:id` with
-`.param set :id <entity id>`.
+| File | Main tables | Holds |
+|---|---|---|
+| `graph.db` | `stable_graph`, `event_graph`, `expired_*`, `graph_state`, `embeddings` | The graph itself: people, organizations, places, groups, apps, events, and recently withdrawn rows |
+| `ontology.db` | `class`, `predicate` | What every code means |
+| `Artifacts/entityTagging/entityTagging.db` | `entity_tagging` | Relationship scores per entity (section 7.5) |
+| `Artifacts/siri/remembers/view.db` | `interactions`, `entities`, `interactionEntities` | The communication log: messages and calls as metadata, no text (section 7.7) |
+| `Artifacts/internal/views.db` | `handle_id`, `phperson_id_map`, `entity_alias`, … | Identity maps and aliases |
+| `Artifacts/entityRelevance/entityRelevanceInferences.db` | `person_entity_relevance`, … | Who matters right now, with Apple's own explanations |
+| `Artifacts/entityRelevance/entityImportanceSignals.db` | `entityImportanceSignalsIDMap` | Favorite, emergency contact and iCloud Family flags |
+| `Artifacts/feature/features.db` | `kv` | The inputs behind the scores and rankings |
+| `views.db` | `viewConfigRecord`, `viewState` | Which derived views exist and what they read |
+| `globalKnowledge.db` | `static_graph`, `live_graph` | Apple's general world knowledge, plus a cache of lookups answered off the device. Not personal. |
+| `behaviors.db` | `histogram`, … | Usage histograms; how they relate to the graph is not established |
 
-```sh
-cd ~/Library/IntelligencePlatform
-sqlite3 -header -column "file:graph.db?mode=ro"
-```
+Most other stores under `Artifacts/` are copies of graph rows made for one
+consumer or another.
 
-In Python, keep the `text_factory` line; some columns are not valid UTF-8:
+Open stores from inside `~/Library/IntelligencePlatform` so relative `file:`
+paths work (SQL does not expand `~`), and bind ids with
+`.param set :id <entity id>`. In Python, set a lenient text factory, because
+some columns hold bytes that are not valid UTF-8:
 
 ```python
-import sqlite3, os
-def ro(path):
+import os, sqlite3
+def open_ro(path):
     c = sqlite3.connect(f"file:{os.path.expanduser(path)}?mode=ro", uri=True)
     c.text_factory = lambda b: b.decode("utf-8", "replace")
     c.row_factory = sqlite3.Row
     return c
 ```
 
-### 2.4 iKnow shortcuts
-
-With this repository on `sys.path`, `from api import db, vocab` (standard
-library, no server) gives `db.query("graph/graph.db", sql)`, `vocab.owner_id()`,
-`vocab.name_of(eid)`, `vocab.statements("stable_graph", subject=eid)` (facets
-collapsed into statements), `vocab.plabel` / `vocab.clabel` (decode codes),
-`vocab.source_names(mask)` and `db.apple_time(v)`. Nested stores are named with
-`__` for `/` (`graph/Artifacts__siri__remembers__view.db`); `sources/chat.db`,
-`sources/Calendar.sqlitedb` and `sources/Photos.sqlite` find the source stores.
-
-If the owner runs `python3 server.py`, each page's JSON is at
-`http://127.0.0.1:8765/api/<page>` (`overview`, `identity`, `person?id=`,
-`kinship`, `comms`, `calendar`, `social`, `faces`, `certainty`, `retractions`,
-`device`, `exposure`). Send the token from the link the server printed
-(`-H "Authorization: Bearer $TOKEN"`); ask the owner for it, since it changes
-each start. A `401` means a restart. Add `redact=1` to replace names, phone
-numbers and addresses with numbered stand-ins when the owner will share your
-output.
+With the iOwl folder on `sys.path`, `from api import db, vocab` gives you the
+same helpers iOwl uses: `db.query(store, sql)`, `vocab.owner_id()`,
+`vocab.name_of(id)`, `vocab.statements(layer, subject=id)`, `vocab.plabel` and
+`vocab.clabel` to decode codes, `vocab.source_names(mask)`, and
+`db.apple_time(value)`.
 
 ---
 
-## 3. The stores
+## 5. How the graph is laid out
 
-Under `~/Library/IntelligencePlatform`. Ignore `-fullRebuild.db` staging copies.
+### Rows are triples
 
-| File | Tables | What |
+`stable_graph`, `event_graph` and their `expired_` copies share one layout:
+
+| Column | Type | Meaning |
 |---|---|---|
-| `graph.db` | `stable_graph`, `event_graph`, `expired_*`, `graph_state` | **The graph**: people, organisations, places, apps, groups; calendar events; withdrawn rows |
-| `ontology.db` | `class`, `predicate` | decodes every code |
-| `Artifacts/entityTagging/entityTagging.db` | `entity_tagging` | **the relationship scorecard** (§6.6) |
-| `Artifacts/siri/remembers/view.db` | `interactions`, `entities`, `interactionEntities` | **the interaction log**: messages and calls as metadata, no text (§6.8) |
-| `Artifacts/internal/views.db` | `handle_id`, `phperson_id_map`, `entity_alias`, `people_relationship`, … | identity maps, aliases, behavioural event streams |
-| `entityRelevanceInferences.db` in `Artifacts/entityRelevance/` | `person_entity_relevance`, … | relevance rankings (§6.10) |
-| `entityImportanceSignals.db`, same directory | `entityImportanceSignalsIDMap` | favourite, emergency-contact and iCloud-family flags (§6.7) |
-| `Artifacts/feature/features.db` | `kv` | inputs to the scorecard and rankings (§6.13) |
-| `views.db` | `viewConfigRecord`, `viewState` | which views exist, what they read, when they ran |
-| `globalKnowledge.db` | `static_graph`, `live_graph` | **not personal**: Apple reference knowledge, and a cache of off-device lookups |
-| `behaviors.db` | `histogram`, … | behavioural histograms (apps, locations, Wi-Fi, focus); relation to the graph not established |
+| `subject` | integer | The entity the row is about (64-bit id) |
+| `predicate` | text | What is being said, as a code (`PS33`, `nm_bundleID`, …) |
+| `relationshipId` | integer | 0 for a simple attribute; otherwise the id of the statement this row is part of |
+| `relationshipPredicate` | text | Empty for a simple attribute; otherwise which part of the statement this row holds |
+| `object` | text | The value, always stored as text whatever it represents |
+| `sources` | integer | Bitmask of the feeds that asserted the row (section 5.4) |
+| `confidence` | real | 0 to 1 |
+| `sourceDuplicates` | text | The source records behind the row, separated by character 30 |
+| `timestamp` | real | Apple time when the graph wrote the row |
 
-The other `Artifacts/` stores are mostly per-consumer copies of graph rows.
+`stable_graph` holds people, organizations, places, groups, apps and the owner.
+`event_graph` holds calendar events and reservations. The `expired_` tables hold
+rows the graph has recently withdrawn (section 7.10).
 
----
+### Statements span several rows
 
-## 4. The triple store
+A row with `relationshipId = 0` and an empty `relationshipPredicate` is a
+simple attribute, such as a name. Anything richer is split across rows that
+share `subject`, `predicate` and `relationshipId`, one row per part. A phone
+number, for example, is a `PS520` statement made of three rows: `PS1` holding
+its type (`CS97`), `PS407` holding the number and `PS740` holding the label.
 
-### 4.1 Schema
+So group by `relationshipId` and pivot on `relationshipPredicate`. Parts can
+repeat (a group statement has one `PS566` row per member), so collect them as
+lists. Counting rows counts parts, not facts.
 
-`stable_graph`, `event_graph` and their `expired_` twins share these columns:
+### Ids and references
 
-```sql
-subject                INTEGER  -- entity id, 64-bit
-predicate              TEXT     -- ontology code: 'PS33', 'nm_bundleID', …
-relationshipId         INTEGER  -- 0 for a plain attribute; otherwise the id of a reified statement
-relationshipPredicate  TEXT     -- '' for a plain attribute; otherwise the facet this row carries
-object                 TEXT     -- the value (always TEXT, whatever it encodes)
-sources                INTEGER  -- bitmask of the ingests that asserted it (§4.5)
-confidence             DOUBLE   -- 0..1
-sourceDuplicates       TEXT     -- the source records it came from, 0x1E-separated (§4.5)
-timestamp              DOUBLE   -- Apple absolute time: when the row was written
-```
+- Entity ids are signed 64-bit and often larger than 2^53. Keep them as strings
+  anywhere JavaScript or floating point is involved.
+- A reference to another entity is the text `md:<id>`. Follow it with
+  `CAST(substr(object, 4) AS INTEGER)`. A bare number in `object` is never a
+  reference.
+- Recognize other namespaces by checking the start of the value against a
+  known list. Never split on `:`, because ordinary text and dates contain
+  colons too.
 
-### 4.2 Layers
-
-`stable_graph`: people, organisations, places, groups, apps, the owner.
-`event_graph`: calendar events and reservations. `expired_*`: withdrawn rows,
-kept with their confidence, sources and timestamp until
-`graph_state.expiredTriplesPruneTimestamp` (§6.12).
-
-### 4.3 Reification
-
-A row with `relationshipId = 0` and `relationshipPredicate = ''` is a plain
-attribute. Otherwise it is **one facet of a statement**: facets share
-`subject`, `predicate` and `relationshipId`, and each carries one
-`relationshipPredicate` and its value. A phone number is a `PS520` statement
-with facets `PS1` = `CS97` (its type), `PS407` = the number and `PS740` = the
-label. Group by `relationshipId` and pivot on `relationshipPredicate` into
-lists, since facets repeat (one `PS566` per group member). Counting rows counts
-facets, not facts.
-
-### 4.4 Ids and object values
-
-- Entity ids are signed 64-bit and exceed 2^53. Keep them as strings wherever
-  JavaScript or floats touch them.
-- A reference is the text `md:<id>`; follow it with
-  `CAST(substr(object, 4) AS INTEGER)`. A bare integer is never a reference.
-- Namespaces are recognised by an allowlist of heads, never by splitting on `:`.
-
-| Head | Points at | Resolvable? |
+| Starts with | Points to | Can you follow it? |
 |---|---|---|
-| `md:` | another entity in this graph | yes |
-| `cnContact:` | a Contacts record: `<UUID>:ABPerson` | yes, verbatim (§7.1) |
-| `phPerson:` | a Photos person cluster: `<ZPERSONUUID>/L0/<nnn>` | yes (§7.2) |
-| `ekEvent:` | an EventKit event: base64 SHA-256 of `<store persistent_id>:<item unique_identifier>` | yes, by hashing (§7.3) |
-| `lsBundleRecord:` | an installed app: base64 SHA-256 of the bundle id | yes, by hashing |
-| `sgEvent:`, `sgContact:` | Siri Suggestions events and contacts found in mail and messages | no |
-| `inPerson:` | an Intents person | no |
-| `faFamilyCircle:` | a Family Sharing circle | no, but equal tokens mean the same circle |
-| `tel:`, `mailto:`, `http:`, `https:` | URIs | n/a |
+| `md:` | Another entity in this graph | Yes |
+| `cnContact:` | A Contacts record, `<UUID>:ABPerson` | Yes, as written (section 8.1) |
+| `phPerson:` | A Photos face cluster, `<ZPERSONUUID>/L0/<nnn>` | Yes (section 8.2) |
+| `ekEvent:` | A calendar event: base64 SHA-256 of `<store persistent_id>:<item unique_identifier>` | Yes, by hashing (section 8.3) |
+| `lsBundleRecord:` | An installed app: base64 SHA-256 of its bundle id | Yes, by hashing |
+| `sgEvent:`, `sgContact:` | Events and contacts Siri Suggestions found in mail and messages | No |
+| `inPerson:` | A person from the Intents framework | No |
+| `faFamilyCircle:` | A Family Sharing circle | No, but matching values mean the same circle |
+| `tel:`, `mailto:`, `http:`, `https:` | Ordinary URIs | Not applicable |
 
-`PS407` and `PS406` facets also hold phone numbers and mail addresses as
-literals. The hashed namespaces are unsalted, so pseudonymous, not anonymous.
-Dates in objects are JSON (`NSDateComponents`: `year`, `month`, `day`, `hour`,
-`minute`, `timeZone.identifier`, …); read them with `json_extract`. All-day
-entries have no `hour`. `nm_imputed*` facets are Apple time as text.
+The hashes are unsalted, so these references are pseudonymous, not anonymous.
+Phone numbers and mail addresses also appear in plain text in `PS407` and
+`PS406` parts. Dates inside `object` are JSON with fields such as `year`,
+`month`, `day`, `hour`, `minute` and `timeZone.identifier`; read them with
+`json_extract`. All-day entries have no `hour`. `nm_imputed*` values are Apple
+time written as text.
 
-### 4.5 Provenance
+### Where a row came from
 
-- **`confidence`** mostly tracks which ingest wrote the row (Contacts 1.0,
-  Photos 0.9, most others 0.7–0.8 on the store checked), not certainty. A 0.8
-  may mean "written by a 0.8 source".
-- **`sources`** is a bitmask: test `sources & (1<<n)`, never `GROUP BY sources`.
-  This mapping was derived empirically:
+- **`confidence`** mostly reflects which feed wrote the row, not how sure the
+  system is. On the stores checked, Contacts rows were 1.0, Photos 0.9 and most
+  others between 0.7 and 0.8.
+- **`sources`** is a bitmask. Test each bit with `sources & (1<<n)`. Never
+  `GROUP BY sources`, because many rows set several bits. This mapping was
+  worked out by observation, not from Apple:
 
-  | bit | ingest |
+  | Bit | Feed |
   |---|---|
   | 0 | Contacts |
   | 1 | Intents (INPerson) |
   | 5 | Photos face clusters |
   | 8 | Calendar (EventKit) |
-  | 10 | Suggestions contacts |
-  | 11 | Suggestions events |
+  | 10 | Siri Suggestions contacts |
+  | 11 | Siri Suggestions events |
   | 13 | Family Sharing |
-  | 15 | App catalogue |
+  | 15 | App catalog |
 
-- **`sourceDuplicates`** lists the source records behind a row, separated by
-  `char(30)`: the most direct answer to "where did this come from".
-- `nm_associationReason` (on face bindings) holds owner-asserted and
-  model-derived reasons in one enum. On aliases, `nm_signalLabel`
-  `*_provided_alias` came from a record and `derived_alias` was generated.
+- **`sourceDuplicates`** names the source records behind a row, split by
+  `char(30)`. It is the most direct answer to "where did this come from".
+- On face links, `nm_associationReason` mixes reasons the owner gave with
+  reasons a model derived. On aliases, an `nm_signalLabel` ending in
+  `_provided_alias` came from a record, while `derived_alias` was generated.
 
-### 4.6 Time
+### Time
 
-Most timestamps are Apple seconds since 2001:
-`datetime(x + 978307200, 'unixepoch', 'localtime')`. `chat.db` `message.date`
-is in nanoseconds (divide by 1e9 first); event dates are JSON (§4.4).
-`timestamp` is when the graph wrote the row, not when the thing happened.
+Most timestamps are Apple time, seconds since 2001-01-01:
+`datetime(x + 978307200, 'unixepoch', 'localtime')`. `chat.db` keeps
+`message.date` in nanoseconds, so divide by 1e9 first. A `timestamp` is when
+the graph wrote the row, not when the thing happened. A value of `0.0` means
+"never", so filter `> 0`.
 
 ---
 
-## 5. Vocabulary
+## 6. Codes
 
-`SB`, `CS` and `PS` codes are the ontology's classes, statement types and
-predicates; `nm_` codes are Apple's local extension. Decode them with
-`ontology.db`:
+`SB` codes are classes, `CS` codes are statement types, `PS` codes are
+predicates, and `nm_` codes are Apple's local additions. Decode any of them
+from `ontology.db`:
 
 ```sql
 ATTACH 'file:ontology.db?mode=ro' AS o;
-SELECT g.predicate, p.label, count(*) n
+SELECT g.predicate, p.label, COUNT(*) AS n
 FROM stable_graph g LEFT JOIN o.predicate p ON p.id = g.predicate
 GROUP BY 1 ORDER BY n DESC;
 ```
 
-Classes: `SB104` person · `SB10` organization · `SB152` place · `SB2` group of
-humans · `SB144` software · `SB472` calendar event.
+Classes you will see most: `SB104` person, `SB10` organization, `SB152` place,
+`SB2` group of people, `SB144` software, `SB472` calendar event.
 
-| Code | Meaning and facets |
-|---|---|
-| `PS1` | is a (class code) |
-| `PS33` · `PS312` · `PS546` · `PS441` | name · first · middle · family name |
-| `nm_isCurrentUser` | the owner (exactly one entity) |
-| `PS102` | same as: a namespaced reference elsewhere |
-| `PS520` | contact info: `PS407` phone, `PS406` email, `PS740` label |
-| `nm_entityAliasRelationship` | alias: `PS89` text, `nm_signalLabel`, `nm_confirmationConfidence` |
-| `nm_hasVisualIdentifier` | face: `nm_visualIdentifier` (Photos cluster), `nm_associationReason` |
-| `PS500` | employer: `PS45` → `md:` organisation, `PS548` department |
-| `PS753` | group: `PS566` → `md:` member (repeats) |
-| `PS317` | address: `PS316` street, `PS453` city, `PS315` postcode, `PS450` country |
-| `PS225` | location: `PS107` → `md:` place |
-| `nm_bundleID` · `PS194` | app bundle id · published by |
-| `PS33` · `PS51` (events) | title · **the full description, verbatim**, often written by someone else |
-| `nm_hasDate` (events) | `PS29` start, `PS30` end |
-| `PS232` · `PS578` (events) | attendee · organizer: `PS143` → `md:` person |
-| `nm_virtualConferenceURL` (events) | join links and dial-ins (`tel:` here is not a person) |
+| Code | Means | Parts |
+|---|---|---|
+| `PS1` | Is a (class) | |
+| `PS33`, `PS312`, `PS546`, `PS441` | Name, first, middle, family name | |
+| `nm_isCurrentUser` | The owner (one entity) | |
+| `PS102` | Same as: a reference into another store | |
+| `PS520` | Contact information | `PS407` phone, `PS406` mail, `PS740` label |
+| `nm_entityAliasRelationship` | An alias | `PS89` text, `nm_signalLabel`, `nm_confirmationConfidence` |
+| `nm_hasVisualIdentifier` | A face | `nm_visualIdentifier` (Photos cluster), `nm_associationReason` |
+| `PS500` | Employer | `PS45` the organization (`md:`), `PS548` department |
+| `PS753` | Group membership | `PS566` each member (`md:`) |
+| `PS317` | Postal address | `PS316` street, `PS453` city, `PS315` postal code, `PS450` country |
+| `PS225` | Location | `PS107` the place (`md:`) |
+| `nm_bundleID`, `PS194` | App bundle id, publisher | |
+| `PS33`, `PS51` on events | Title, and the full description word for word, often written by someone else | |
+| `nm_hasDate` on events | Dates | `PS29` start, `PS30` end |
+| `PS232`, `PS578` on events | Attendee, organizer | `PS143` the person (`md:`) |
+| `nm_virtualConferenceURL` | Join links and dial-ins | A `tel:` here is a dial-in, not a person |
 
-Events come from EventKit (`sources` bit 8: attendees, no descriptions) and
-Suggestions (bit 11: descriptions and reservations from mail, no attendees).
-They share no subject; don't join them.
+Events arrive from two feeds that never share a subject, so never join them:
+EventKit (bit 8) brings attendees but no descriptions, and Siri Suggestions
+(bit 11) brings descriptions and reservations found in mail but no attendees.
 
 ---
 
-## 6. Recipes
+## 7. Answering common questions
 
-Against `graph.db` unless stated otherwise.
+All of these run against `graph.db` unless noted.
 
-### 6.1 The owner
+### 7.1 Which entity is the owner?
 
 ```sql
 SELECT subject FROM stable_graph WHERE predicate = 'nm_isCurrentUser';
 ```
 
-Exclude this id from every "top people" ranking.
+Leave this id out of every "top people" list.
 
-### 6.2 Find a person
+### 7.2 Find a person by name or handle
 
 ```sql
 SELECT DISTINCT subject, predicate, relationshipPredicate, object
 FROM stable_graph
-WHERE (predicate IN ('PS33','PS312','PS441','PS546')
-       OR (predicate = 'nm_entityAliasRelationship' AND relationshipPredicate = 'PS89'))
-  AND object LIKE '%' || :name || '%';
+WHERE object LIKE '%' || :name || '%'
+  AND (predicate IN ('PS33', 'PS312', 'PS441', 'PS546')
+       OR (predicate = 'nm_entityAliasRelationship' AND relationshipPredicate = 'PS89'));
 ```
 
-By handle: the `PS407` / `PS406` facets of `PS520` (compare phone numbers by
-their last 9 digits), or `SELECT id FROM handle_id WHERE handle = :handle` in
-`internal/views.db`. Many entities have no name; label them by their handle and
-never invent one.
+To find someone by phone or mail address, search the `PS407` and `PS406` parts
+of `PS520` (match phone numbers on their last nine digits), or run
+`SELECT id FROM handle_id WHERE handle = :handle` in `internal/views.db`.
+Many entities have no name at all. Describe them by what they do have, and
+never make up a name.
 
-### 6.3 Everything about one entity
+### 7.3 Everything about one entity
 
 ```sql
 ATTACH 'file:ontology.db?mode=ro' AS o;
 
--- outbound: every row with this subject, decoded
+-- what it says
 SELECT g.predicate, p.label, g.relationshipId AS rid,
-       g.relationshipPredicate AS facet, f.label AS facet_label,
+       g.relationshipPredicate AS part, f.label AS part_label,
        g.object, g.confidence, g.sources,
        datetime(g.timestamp + 978307200, 'unixepoch') AS written
 FROM stable_graph g
@@ -347,125 +357,129 @@ LEFT JOIN o.predicate f ON f.id = g.relationshipPredicate
 WHERE g.subject = :id
 ORDER BY g.predicate, g.relationshipId, g.relationshipPredicate;
 
--- inbound: who points at it (groups, employees, events it attends)
-SELECT 'stable' AS layer, subject, predicate, relationshipPredicate FROM stable_graph WHERE object = 'md:' || :id
+-- what points at it: groups, employees, events it attends
+SELECT 'stable' AS layer, subject, predicate, relationshipPredicate
+FROM stable_graph WHERE object = 'md:' || :id
 UNION ALL
-SELECT 'event', subject, predicate, relationshipPredicate FROM event_graph WHERE object = 'md:' || :id;
+SELECT 'event', subject, predicate, relationshipPredicate
+FROM event_graph WHERE object = 'md:' || :id;
 ```
 
-The same id keys `entity_tagging`, `entityImportanceSignalsIDMap`,
+The same id is the key in `entity_tagging`, `entityImportanceSignalsIDMap`,
 `person_entity_relevance`, `handle_id` and `phperson_id_map`.
 
-### 6.4 Contact info and employer
+### 7.4 Contact details, employer, address
 
 ```sql
+-- phone numbers and mail addresses
 SELECT relationshipId,
-  max(CASE WHEN relationshipPredicate = 'PS407' THEN object END) AS phone,
-  max(CASE WHEN relationshipPredicate = 'PS406' THEN object END) AS email,
-  max(CASE WHEN relationshipPredicate = 'PS740' THEN object END) AS label,
-  max(sources) AS sources
+  MAX(CASE WHEN relationshipPredicate = 'PS407' THEN object END) AS phone,
+  MAX(CASE WHEN relationshipPredicate = 'PS406' THEN object END) AS mail,
+  MAX(CASE WHEN relationshipPredicate = 'PS740' THEN object END) AS label
 FROM stable_graph WHERE predicate = 'PS520' AND subject = :id
 GROUP BY relationshipId;
 
-SELECT e.subject AS person, org.object AS organisation, dep.object AS department, e.confidence
+-- employer and department
+SELECT org.object AS organization, dep.object AS department, e.confidence
 FROM stable_graph e
-JOIN stable_graph org ON org.subject = CAST(substr(e.object, 4) AS INTEGER) AND org.predicate = 'PS33'
+JOIN stable_graph org ON org.subject = CAST(substr(e.object, 4) AS INTEGER)
+                     AND org.predicate = 'PS33'
 LEFT JOIN stable_graph dep ON dep.subject = e.subject AND dep.relationshipId = e.relationshipId
                           AND dep.relationshipPredicate = 'PS548'
-WHERE e.predicate = 'PS500' AND e.relationshipPredicate = 'PS45' AND e.subject = :id;
-```
+WHERE e.subject = :id AND e.predicate = 'PS500' AND e.relationshipPredicate = 'PS45';
 
-Strip the `_$!<…>!$_` markers from `PS740` labels for display. The face cluster
-is the `nm_visualIdentifier` facet of `nm_hasVisualIdentifier` (§7.2).
-
-### 6.5 Addresses
-
-```sql
+-- postal addresses
 SELECT subject, relationshipId,
-  max(CASE WHEN relationshipPredicate = 'PS316' THEN object END) AS street,
-  max(CASE WHEN relationshipPredicate = 'PS453' THEN object END) AS city,
-  max(CASE WHEN relationshipPredicate = 'PS315' THEN object END) AS postcode,
-  max(CASE WHEN relationshipPredicate = 'PS450' THEN object END) AS country
+  MAX(CASE WHEN relationshipPredicate = 'PS316' THEN object END) AS street,
+  MAX(CASE WHEN relationshipPredicate = 'PS453' THEN object END) AS city,
+  MAX(CASE WHEN relationshipPredicate = 'PS315' THEN object END) AS postal_code,
+  MAX(CASE WHEN relationshipPredicate = 'PS450' THEN object END) AS country
 FROM stable_graph WHERE predicate = 'PS317'
 GROUP BY subject, relationshipId;
 ```
 
-An address on a person was usually copied from their contact card. Check the
-subject's class (`PS1`) before saying "X lives at".
+Remove the `_$!<…>!$_` wrapping from `PS740` labels before showing them. An
+address on a person was usually copied from their contact card; check the
+subject's class before saying "X lives at".
 
-### 6.6 The relationship scorecard
+### 7.5 Relationship scores
 
-`Artifacts/entityTagging/entityTagging.db`. `mdid` is the entity id as TEXT.
+In `Artifacts/entityTagging/entityTagging.db`. `mdid` is the entity id stored
+as text.
 
 ```sql
--- open entityTagging.db, then:
+-- inside entityTagging.db
 ATTACH 'file:graph.db?mode=ro' AS g;
 
 SELECT t.mdid,
-       (SELECT object FROM g.stable_graph n WHERE n.subject = CAST(t.mdid AS INTEGER)
-          AND n.predicate = 'PS33' ORDER BY n.confidence DESC LIMIT 1) AS name,
-       (SELECT object FROM g.stable_graph k WHERE k.subject = CAST(t.mdid AS INTEGER)
-          AND k.predicate = 'PS1' AND k.relationshipId = 0 LIMIT 1) AS class,
-       round(t.familyAndFriends, 3) ff, round(t.family, 3) fam, round(t.friend, 3) friend,
-       t.partner, t.mother, t.father, t.sibling, t.child, t.myself
+  (SELECT object FROM g.stable_graph n WHERE n.subject = CAST(t.mdid AS INTEGER)
+     AND n.predicate = 'PS33' ORDER BY n.confidence DESC, length(n.object) DESC LIMIT 1) AS name,
+  (SELECT object FROM g.stable_graph k WHERE k.subject = CAST(t.mdid AS INTEGER)
+     AND k.predicate = 'PS1' AND k.relationshipId = 0 LIMIT 1) AS class,
+  ROUND(t.familyAndFriends, 3) AS family_and_friends, ROUND(t.family, 3) AS family
 FROM entity_tagging t
 ORDER BY t.familyAndFriends DESC LIMIT 40;
 ```
 
-- The scores are inferred. Most columns are sparse, with a few quantised values
-  (0.125, 0.25, 0.5); `family` and `familyAndFriends` are not. How they are
-  computed is not documented.
-- Scores cluster high, and organisations can score as family. Compare a score
-  with the rest of the table, not with 0.5, and check the evidence (§6.13).
-- The table has no timestamp and can keep scoring entities the live graph has
-  dropped. Check that `mdid` still has rows in `stable_graph`.
-- Nothing documented reads these scores. Don't say the scorecard "decides"
+Read the score columns from `PRAGMA table_info(entity_tagging)` rather than
+assuming them, because they change between releases. Things to keep in mind:
+
+- These scores are inferred, and how they are computed is not documented.
+- Most columns are sparse and take a few fixed values (0.125, 0.25, 0.5);
+  `family` and `familyAndFriends` vary more.
+- Scores bunch near the top and organizations can score as family, so compare
+  a score with the rest of the table, not with 0.5, and look at the evidence
+  (section 7.11).
+- The table has no timestamp and can go on scoring entities the live graph has
+  dropped. Check that the `mdid` still has rows in `stable_graph`.
+- Nothing documented is known to act on these scores. Don't say they "decide"
   anything.
 
-### 6.7 Family signals
+### 7.6 What the owner declared about family
 
 ```sql
--- in Artifacts/entityRelevance: entityImportanceSignals.db
+-- inside Artifacts/entityRelevance/entityImportanceSignals.db
 SELECT entityIdentifier, isFavorite, isEmergencyContact, isICloudFamily, relationshipLabel
 FROM entityImportanceSignalsIDMap
 WHERE isFavorite OR isEmergencyContact OR isICloudFamily OR coalesce(relationshipLabel, '') <> '';
 ```
 
-Entities sharing the owner's `faFamilyCircle:` token are in their Family
-Sharing circle; a `PS753` group with `sources` bit 13 is the Family Sharing
-group. These, and the relations the owner typed in Contacts (§7.1), are
-declared; the scorecard is inferred. They can disagree: report them side by
-side and say which is which.
+Entities sharing the owner's `faFamilyCircle:` value are in their Family
+Sharing circle, and a `PS753` group with bit 13 set is the Family Sharing
+group. These flags, and the relations typed into Contacts (section 8.1), are
+things the owner stated. The scores in 7.5 are inferred. When they disagree,
+show both and say which is which.
 
-### 6.8 Communication
+### 7.7 Who the owner talks to
 
-`Artifacts/siri/remembers/view.db`. `interactions` has a row per message or
-call (`domain`, `bundleId`, `direction`, `handlingStatus`, `startDate`,
+In `Artifacts/siri/remembers/view.db`. `interactions` has one row per message
+or call (`domain`, `bundleId`, `direction`, `handlingStatus`, `startDate`,
 `durationSeconds`, `contentHash`, `isLocal`, `remoteDeviceId`). `entities`
-holds the counterparts (`type` `Person`, `PersonHandle` or `MessageGroup`; `id`
-is the handle; `fields` JSON has `name`). `interactionEntities (interactionRowid,
-entityRowid, parameter)` links them, with roles such as `sender` and
-`recipients`.
+holds the other parties (`type` is `Person`, `PersonHandle` or `MessageGroup`;
+`id` is the handle; the `fields` JSON has `name`).
+`interactionEntities (interactionRowid, entityRowid, parameter)` links them,
+with roles such as `sender` and `recipients`.
 
-Establish what `direction` means on this Mac first; don't assume Apple's
-public enum. Only incoming interactions have a `sender`:
+Work out what `direction` means on this Mac before using it. Don't assume
+Apple's public enum. Only incoming rows have a `sender`, so:
 
 ```sql
-SELECT i.direction, count(*) n,
-  sum(EXISTS(SELECT 1 FROM interactionEntities ie WHERE ie.interactionRowid = i.rowid AND ie.parameter = 'sender')) AS with_sender
+SELECT i.direction, COUNT(*) AS n,
+  SUM(EXISTS (SELECT 1 FROM interactionEntities ie
+              WHERE ie.interactionRowid = i.rowid AND ie.parameter = 'sender')) AS has_sender
 FROM interactions i GROUP BY 1;
 ```
 
-The same way, the `handlingStatus` of `Calls` rows with `durationSeconds > 0`
-is the connected-call status. Top counterparts:
+Likewise, the connected-call status is the `handlingStatus` whose `Calls` rows
+carry a duration. Most frequent counterparts:
 
 ```sql
 ATTACH 'file:Artifacts/internal/views.db?mode=ro' AS iv;
 
-SELECT h.id AS entity, count(DISTINCT i.rowid) AS interactions,
-       sum(i.domain = 'Calls') AS calls, sum(i.domain = 'Messages') AS messages,
-       datetime(min(i.startDate) + 978307200, 'unixepoch', 'localtime') AS first,
-       datetime(max(i.startDate) + 978307200, 'unixepoch', 'localtime') AS last
+SELECT h.id AS entity, COUNT(DISTINCT i.rowid) AS interactions,
+  SUM(i.domain = 'Calls') AS calls, SUM(i.domain = 'Messages') AS messages,
+  datetime(MIN(i.startDate) + 978307200, 'unixepoch', 'localtime') AS first_seen,
+  datetime(MAX(i.startDate) + 978307200, 'unixepoch', 'localtime') AS last_seen
 FROM entities e
 JOIN iv.handle_id h ON h.handle = e.id
 JOIN interactionEntities ie ON ie.entityRowid = e.rowid
@@ -474,126 +488,132 @@ WHERE e.type = 'PersonHandle'
 GROUP BY h.id ORDER BY interactions DESC LIMIT 25;
 ```
 
-When you answer, say that the log covers a limited window (measure it) and
-holds metadata only, no message text. `contentHash` is a thread key: it counts
-conversations, not messages. `handle_id` is many-to-many. Rows with
-`isLocal = 0` came from another of the owner's devices; count them before
-saying "on this Mac".
+When you report on this log, say that it covers a limited window (measure it)
+and holds metadata only, never message text. `contentHash` identifies a
+conversation, not a message. `handle_id` is many-to-many. Rows with
+`isLocal = 0`, or a `remoteDeviceId`, came from another of the owner's devices,
+so count them before saying "on this Mac".
 
-### 6.9 Calendar
+### 7.8 Calendar
 
 ```sql
 SELECT st.subject AS event,
-       (SELECT object FROM event_graph t WHERE t.subject = st.subject AND t.predicate = 'PS33' LIMIT 1) AS title,
-       printf('%04d-%02d-%02d %02d:%02d',
-              json_extract(st.object, '$.year'), json_extract(st.object, '$.month'),
-              json_extract(st.object, '$.day'), coalesce(json_extract(st.object, '$.hour'), 0),
-              coalesce(json_extract(st.object, '$.minute'), 0)) AS starts,
-       json_extract(st.object, '$.timeZone.identifier') AS tz
+  (SELECT object FROM event_graph t WHERE t.subject = st.subject AND t.predicate = 'PS33' LIMIT 1) AS title,
+  printf('%04d-%02d-%02d %02d:%02d',
+    json_extract(st.object, '$.year'), json_extract(st.object, '$.month'),
+    json_extract(st.object, '$.day'), coalesce(json_extract(st.object, '$.hour'), 0),
+    coalesce(json_extract(st.object, '$.minute'), 0)) AS starts,
+  json_extract(st.object, '$.timeZone.identifier') AS tz
 FROM event_graph st
 WHERE st.relationshipPredicate = 'PS29'
 ORDER BY starts;
 
 -- the people the owner shares the most events with
-SELECT CAST(substr(object, 4) AS INTEGER) AS person, count(DISTINCT subject) AS events
+SELECT CAST(substr(object, 4) AS INTEGER) AS person, COUNT(DISTINCT subject) AS events
 FROM event_graph
 WHERE predicate = 'PS232' AND relationshipPredicate = 'PS143'
   AND object <> 'md:' || (SELECT subject FROM stable_graph WHERE predicate = 'nm_isCurrentUser')
 GROUP BY 1 ORDER BY events DESC LIMIT 25;
 ```
 
-Each date is wall-clock time in its own `tz`. Most attendees are only the
-address they were invited at. Quote descriptions only as far as the question
-needs. The graph holds part of the calendar; `Calendar.sqlitedb` has all of it
-(§7.3).
+Each time is wall-clock time in its own `tz`. Most attendees are known only by
+the address they were invited at. Quote descriptions no further than the
+question needs. The graph holds part of the calendar; `Calendar.sqlitedb` holds
+all of it (section 8.3).
 
-### 6.10 Relevance
+### 7.9 Who matters right now
 
 ```sql
--- in Artifacts/entityRelevance: entityRelevanceInferences.db
-SELECT mdid, round(relevanceScore, 4) AS score,
-       json_extract(explanation, '$.positiveContributions') AS pushed_up,
-       json_extract(explanation, '$.negativeContributions') AS pushed_down
+-- inside Artifacts/entityRelevance/entityRelevanceInferences.db
+SELECT mdid, ROUND(relevanceScore, 4) AS score,
+  json_extract(explanation, '$.positiveContributions') AS raised_by,
+  json_extract(explanation, '$.negativeContributions') AS lowered_by
 FROM person_entity_relevance ORDER BY relevanceScore DESC LIMIT 20;
 ```
 
-`person_entity_longterm` is the long-horizon version; `loi_entity_relevance`
-ranks places. Its inputs include time, place and Wi-Fi context. The
-explanation JSON is Apple's own attribution: quote it, don't invent reasons.
+`person_entity_longterm` is the longer-horizon version and
+`loi_entity_relevance` ranks places. The inputs include time, place and Wi-Fi.
+The explanation JSON is Apple's own account of each ranking: quote it, and
+don't add reasons of your own.
 
-### 6.11 Installed apps
+### 7.10 Installed apps and withdrawn facts
 
 ```sql
 SELECT subject, object AS bundle_id,
-       datetime(timestamp + 978307200, 'unixepoch') AS first_asserted
+  datetime(timestamp + 978307200, 'unixepoch') AS first_written
 FROM stable_graph WHERE predicate = 'nm_bundleID';
 ```
 
-`first_asserted` is when the graph wrote the row, not an install date.
+`first_written` is when the graph recorded the app, not when it was installed.
 
-### 6.12 Withdrawn facts
+To see what became of withdrawn rows:
 
 ```sql
-SELECT fate, count(*) FROM (
+SELECT fate, COUNT(*) FROM (
   SELECT CASE
     WHEN EXISTS (SELECT 1 FROM stable_graph l WHERE l.subject = e.subject AND l.predicate = e.predicate
-                 AND l.relationshipPredicate = e.relationshipPredicate AND l.object = e.object) THEN 'reasserted'
-    WHEN EXISTS (SELECT 1 FROM stable_graph l WHERE l.subject = e.subject AND l.predicate = e.predicate) THEN 'superseded'
+                 AND l.relationshipPredicate = e.relationshipPredicate AND l.object = e.object) THEN 'asserted again'
+    WHEN EXISTS (SELECT 1 FROM stable_graph l WHERE l.subject = e.subject AND l.predicate = e.predicate) THEN 'replaced'
     WHEN EXISTS (SELECT 1 FROM stable_graph l WHERE l.subject = e.subject) THEN 'withdrawn'
     ELSE 'entity gone' END AS fate
-  FROM expired_stable_graph e) GROUP BY fate;
+  FROM expired_stable_graph e)
+GROUP BY fate;
 ```
 
-Repeat for the event layer. Many expired rows are rewrites, not deletions. The
-archive reaches back only to `expiredTriplesPruneTimestamp` in `graph_state`
-(48 hours where measured), so it shows recent change, not a history.
+Run the same for `expired_event_graph`. Many withdrawn rows are rewrites rather
+than deletions. The archive only reaches back to
+`expiredTriplesPruneTimestamp` in `graph_state`, about 48 hours where measured,
+so it shows recent change, not history.
 
-### 6.13 The evidence behind a score
+### 7.11 The evidence behind a score
 
-`Artifacts/feature/features.db`, table `kv (viewName, featureName,
-subidentifierName, value)`; per-person rows have
-`subidentifierName = 'md:<id>'`. View `personEntityTaggingFacts` holds facts
-the tagger evaluated (`sameLastName`, `iCloudFamilyMember`, `photosPersonAge`,
-…); `personEntityTagging` and `photosPersonEntityTagging` hold the behavioural
-profile. `value` is an `NSKeyedArchiver` plist:
+In `Artifacts/feature/features.db`, table
+`kv (viewName, featureName, subidentifierName, value)`. Per-person rows have
+`subidentifierName = 'md:<id>'`. The view `personEntityTaggingFacts` holds the
+facts the scorer checked (`sameLastName`, `iCloudFamilyMember`,
+`photosPersonAge`, …); `personEntityTagging` and `photosPersonEntityTagging`
+hold the behavioral profile. Each `value` is an `NSKeyedArchiver` plist:
 
 ```python
 import plistlib
-def feature(blob):
+def read_feature(blob):
     objs = plistlib.loads(blob)["$objects"]
     top = objs[1]
-    deref = lambda u: objs[u.data] if isinstance(u, plistlib.UID) else u
-    return deref(top.get("type")), deref(top.get("value"))
+    get = lambda u: objs[u.data] if isinstance(u, plistlib.UID) else u
+    return get(top.get("type")), get(top.get("value"))
 ```
 
-A row means the question was asked, not that the answer was yes. Count true
-values.
+A row means the question was asked, not that the answer was yes. Count the
+true values.
 
 ---
 
-## 7. The source stores
+## 8. Following references into the source stores
 
-Open these `mode=ro` too.
+Open these read-only as well.
 
-### 7.1 Contacts
+### 8.1 Contacts
 
-Drop the head from `cnContact:<UUID>:ABPerson` and the rest matches
-`ZABCDRECORD.ZUNIQUEID` verbatim, suffix included; a few match `ZLINKID`.
-Search every account's `AddressBook-v22.abcddb`.
+Drop the `cnContact:` prefix and match the rest, `:ABPerson` suffix included,
+against `ZABCDRECORD.ZUNIQUEID`. A few match `ZLINKID` instead. Check every
+account's `AddressBook-v22.abcddb`.
 
 ```sql
-SELECT Z_PK, ZFIRSTNAME, ZLASTNAME, ZORGANIZATION FROM ZABCDRECORD WHERE ZUNIQUEID = :cn OR ZLINKID = :cn;
-SELECT ZNAME, ZLABEL FROM ZABCDRELATEDNAME WHERE ZOWNER = :pk;  -- relations the owner typed
+SELECT Z_PK, ZFIRSTNAME, ZLASTNAME, ZORGANIZATION
+FROM ZABCDRECORD WHERE ZUNIQUEID = :cn OR ZLINKID = :cn;
+
+-- relations the owner typed, such as "mother" or "partner"
+SELECT ZNAME, ZLABEL FROM ZABCDRELATEDNAME WHERE ZOWNER = :pk;
 ```
 
-`ZABCDRELATEDNAME` is what the owner declared ("mother", "partner"); put it
-beside the scorecard. Phones, mail and postal addresses are in
-`ZABCDPHONENUMBER`, `ZABCDEMAILADDRESS` and `ZABCDPOSTALADDRESS`, by `ZOWNER`.
+Show `ZABCDRELATEDNAME` beside the scores in 7.5: one is declared, the other
+inferred. Phones, mail and postal addresses are in `ZABCDPHONENUMBER`,
+`ZABCDEMAILADDRESS` and `ZABCDPOSTALADDRESS`, keyed by `ZOWNER`.
 
-### 7.2 Photos
+### 8.2 Photos
 
-The part of `nm_visualIdentifier` (`<ZPERSONUUID>/L0/<nnn>`) before the first
-`/` is `ZPERSON.ZPERSONUUID`, in plaintext.
+The part of `nm_visualIdentifier` before the first `/` is
+`ZPERSON.ZPERSONUUID`, in plain text.
 
 ```sql
 SELECT Z_PK, ZFULLNAME, ZDISPLAYNAME FROM ZPERSON WHERE ZPERSONUUID = :uuid;
@@ -604,36 +624,40 @@ WHERE f.ZPERSONFORFACE = :person_pk AND a.ZTRASHEDSTATE = 0
 ORDER BY a.ZDATECREATED DESC;
 ```
 
-Size a cluster by counting `ZDETECTEDFACE` rows; `ZFACECOUNT` is a stale cache.
-Scene labels join through `ZMEDIAANALYSISASSETATTRIBUTES`, not `ZASSET`. The
-soft-biometric face codes have no label table: report coverage only. A latitude
+Measure a cluster by counting `ZDETECTEDFACE` rows; `ZFACECOUNT` is a cached
+value that goes stale. Scene labels join through
+`ZMEDIAANALYSISASSETATTRIBUTES`, not `ZASSET`. The face attribute codes have no
+label table, so report how many faces carry them and nothing more. A latitude
 or longitude of `-180.0` means no location.
 
-### 7.3 Calendar
+### 8.3 Calendar
 
-SQLite has no SHA-256, so build the `ekEvent:` lookup in Python (padding kept):
+SQLite has no SHA-256, so build the `ekEvent:` lookup in Python and keep the
+`=` padding:
 
 ```python
 import base64, hashlib
 rows = cal.execute("""
   SELECT ci.ROWID, s.persistent_id || ':' || ci.unique_identifier
-  FROM CalendarItem ci JOIN Calendar c ON c.ROWID = ci.calendar_id JOIN Store s ON s.ROWID = c.store_id
+  FROM CalendarItem ci
+  JOIN Calendar c ON c.ROWID = ci.calendar_id
+  JOIN Store s ON s.ROWID = c.store_id
   WHERE ci.unique_identifier IS NOT NULL AND s.persistent_id IS NOT NULL""")
-by_token = {"ekEvent:" + base64.b64encode(hashlib.sha256(p.encode()).digest()).decode(): rid
-            for rid, p in rows}
+by_token = {"ekEvent:" + base64.b64encode(hashlib.sha256(p.encode()).digest()).decode(): rowid
+            for rowid, p in rows}
 ```
 
 `CalendarItem` has `summary`, `description`, `start_date`, `end_date` and
-`location_id`; `Participant` has `email`, `role` and `status`. `sgEvent:` tokens
-have no known local preimage.
+`location_id`; `Participant` has `email`, `role` and `status`. `sgEvent:`
+values have no known source on the device.
 
-### 7.4 Messages
+### 8.4 Messages
 
-No graph row points at a message. Join by **handle**, which reaches a whole
-thread.
+No graph row points at an individual message. Join by handle, which reaches a
+whole conversation.
 
 ```sql
--- chat.db
+-- inside chat.db
 SELECT h.ROWID, h.id, h.service FROM handle h WHERE lower(h.id) = lower(:handle);
 
 SELECT datetime(m.date / 1e9 + 978307200, 'unixepoch', 'localtime') AS at,
@@ -642,92 +666,84 @@ FROM message m WHERE m.handle_id = :handle_rowid
 ORDER BY m.date DESC LIMIT 50;
 ```
 
-On current macOS the body is often only in `attributedBody`, as a UTF-8 run
-after the `NSString` marker. `chat.db` holds only Messages; other messengers
-appear only as metadata in the interaction log. This is the most sensitive
-join here: read message text only when the owner asks for it.
+On current macOS the text is often only in `attributedBody`, as a UTF-8 run
+after the `NSString` marker. `chat.db` covers Messages only; other messengers
+appear only as metadata in the log (7.7). This is the most sensitive join in
+this guide. Read message text only when the owner asks for it.
 
 ---
 
-## 8. Traps
+## 9. Mistakes that give wrong answers without an error
 
-Each gives a wrong answer without an error.
-
-1. Plain `ATTACH` is read-write, and `immutable=1` hides the newest facts (§1).
-2. Splitting on `:` to find a namespace (§4.4).
-3. Counting rows instead of statements (§4.3).
-4. `GROUP BY sources` (a bitmask), and splitting `sourceDuplicates` on commas
-   (§4.5).
-5. Casting a date object to a number: it is JSON, and every event lands on
+1. A plain `ATTACH` opens read-write; `immutable=1` hides the newest facts.
+2. Finding a namespace by splitting on `:` (section 5.3).
+3. Counting rows when you mean statements (section 5.2).
+4. `GROUP BY sources`, or splitting `sourceDuplicates` on commas (section 5.4).
+5. Casting a date value to a number. It is JSON, and every event lands on
    2001-01-01.
-6. Reading `timestamp` as the event time (§4.6), or `0.0` as a date (it means
-   "never"; filter `> 0`).
-7. Entity ids through JavaScript or a float (§4.4).
-8. Joining `mdid` (TEXT) without `CAST(mdid AS INTEGER)`.
-9. Stripping `:ABPerson` from Contacts ids (§7.1) or `=` padding from tokens.
-10. Trusting `direction` or `handlingStatus` to Apple's public enums, or
-    `contentHash` as a message id (§6.8).
-11. An event-layer `tel:` as a person's number; joining EventKit and
-    Suggestions events (§5).
-12. `ZFACECOUNT`, and scene labels joined to `ZASSET` (§7.2).
-13. The owner in a ranking of contacts.
+6. Reading `timestamp` as when something happened, or `0.0` as a date.
+7. Passing entity ids through JavaScript or a float.
+8. Joining `mdid` (text) without `CAST(mdid AS INTEGER)`.
+9. Stripping `:ABPerson` from Contacts ids, or `=` padding from tokens.
+10. Trusting `direction` or `handlingStatus` to follow Apple's public enums, or
+    treating `contentHash` as a message id.
+11. Taking an event-layer `tel:` for a person's number, or joining EventKit
+    events to Siri Suggestions events.
+12. Using `ZFACECOUNT`, or joining scene labels to `ZASSET`.
+13. Leaving the owner in a ranking of their contacts.
 14. Reading a `-fullRebuild` staging copy.
-15. Picking any `PS33`: some entities have two; order by confidence, then
-    length.
-16. A fixed column list: read score columns from
-    `pragma table_info(entity_tagging)`. Releases change them.
-17. Two live stores read a second apart are not one snapshot.
+15. Taking any `PS33`. Some entities have two; prefer higher confidence, then
+    the longer value.
+16. Hard-coding score columns. Read them from `PRAGMA table_info`.
+17. Treating two live stores read a second apart as one snapshot.
 
 ---
 
-## 9. The system around the graph
+## 10. What is known about the system, and what isn't
 
-Say what is established and where it stops.
-
-- **Builder**: `knowledgeconstructiond` with `intelligenceplatformd` (both have
-  man pages), about once a day on mains power, in per-source phases.
-- **Purpose**: mostly entity resolution and relevance, deciding which person,
-  place or app an utterance means. Apple describes the design in *Growing and
-  Serving Large Open-domain Knowledge Graphs* (SIGMOD 2023, arXiv 2305.09464).
-- **Readers**: programs with private `com.apple.private.intelligenceplatform.*`
-  entitlements, each listing the views it may read
-  (`codesign -d --entitlements - <path>`). Siri inference (`siriinferenced`)
-  has the widest list; the Apple Intelligence runtime
+- **Who builds it.** `knowledgeconstructiond`, working with
+  `intelligenceplatformd` (both have man pages), roughly daily while on power,
+  one source at a time.
+- **What it is for.** Mostly entity resolution and relevance: working out which
+  person, place or app a request refers to. Apple describes the design in
+  *Growing and Serving Large Open-domain Knowledge Graphs* (SIGMOD 2023,
+  arXiv 2305.09464).
+- **Who reads it.** Programs holding private
+  `com.apple.private.intelligenceplatform.*` entitlements, each listing the
+  views it may read (`codesign -d --entitlements - <path>`). Siri inference
+  (`siriinferenced`) has the longest list, and the Apple Intelligence runtime
   (`generativeexperiencesd`) can read the graph layers. No third-party program
-  was found with them, but apps in `/Applications` were not checked.
-  `viewConfigRecord` in `views.db` lists the views.
-- **Leaving the Mac**: no evidence was found that graph content syncs or
-  uploads, which is an open negative, not a clean one. `globalKnowledge.db`'s
-  `live_graph` caches lookups answered off-device. Whether backups include the
-  graph was not settled.
-- **Encryption**: none found beyond TCC and volume encryption (FileVault).
-- **Deletion**: removing a contact, event or photo removes the derived facts on
-  a later run; the scorecard can lag (§6.6). There is no user-facing control.
+  was found with these entitlements, but apps in `/Applications` were not
+  checked. `viewConfigRecord` in `views.db` lists the views.
+- **Whether it leaves the Mac.** No evidence was found that graph content syncs
+  or uploads. That is an open question, not a clean result. `globalKnowledge.db`
+  caches answers fetched from off the device. Whether backups include the graph
+  is not settled.
+- **Encryption.** None found beyond macOS privacy controls and FileVault.
+- **Deletion.** Removing a contact, event or photo removes what was derived from
+  it on a later run, though the scores can lag (7.5). There is no control for
+  the owner to view or clear the graph.
+
+Not covered, or not understood: message and mail bodies are not in the graph
+(message text is only in `chat.db`, though events found in mail do arrive as
+`sgEvent` entities); there is no history beyond the short withdrawal window;
+the histogram blobs in `behaviors.db` and `internal/views.db`,
+`communicationMechanism` codes, what the `*ContextEvents` identifiers mean,
+source bits beyond section 5.4, the scorer's internal thresholds and the
+`embeddings` table are not decoded. Say so rather than guessing.
 
 ---
 
-## 10. Not here, not understood
+## 11. Reporting back
 
-- Message and mail bodies are not in the graph; message text is only in
-  `chat.db`. Events found in mail do enter, as `sgEvent` entities. There is no
-  history beyond a short withdrawal window.
-- Not decoded: the histogram BLOBs in `behaviors.db` and `internal/views.db`,
-  `communicationMechanism` codes, what `*ContextEvents` identifiers denote,
-  `sources` bits beyond §4.5, and the tagger's internal thresholds. Say so;
-  don't guess.
-
----
-
-## 11. Answering well
-
-- Say which layer an answer comes from: a contact card (copied, bit 0), the
-  scorecard (inferred) or the interaction log.
-- Give the scale: denominators, the rest of the table for a score, and whether
-  a list is capped.
-- Say "the store says", not "Apple thinks".
-- Report absences as results: "no face cluster is bound to X".
-- Name unresolved entities by what they have: a handle, an address, "an unnamed
-  person at 4 of your events".
-- Keep the tone plain: numbers over adjectives.
-- If iKnow is running, point to the matching page. The `api/` modules are the
-  reference implementations; their docstrings list the traps they close.
+- Name the layer each answer comes from: a contact card (copied, bit 0), the
+  scores (inferred) or the communication log (metadata).
+- Give scale: the denominator, where a score sits in its table, and whether a
+  list was cut short.
+- Write "the store says", not "Apple thinks".
+- Report absences as findings: "no face cluster is linked to this person".
+- Name unresolved entities by what they have: a handle, an address, "an
+  unnamed person at 4 of your events".
+- Keep it plain. Numbers beat adjectives.
+- If iOwl is running, point the owner to the matching page or report. Its
+  `api/` modules show how each trap above is handled in practice.

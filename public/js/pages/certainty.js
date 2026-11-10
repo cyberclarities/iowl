@@ -12,12 +12,11 @@ import { h, figure, statTile, bars, heatmap, stackedBar, hero, legend,
 
 export const meta = {
   id: 'certainty',
-  nav: 'Guessed or given',
-  group: 'What it concluded',
-  kicker: 'Confidence and provenance',
-  title: 'Facts copied into your Mac and facts it inferred sit in the same table, in the same shape',
-  blurb: 'Every row carries a confidence score and a source bitmask. This page shows how the score is spread, decodes ' +
-         'the bitmask into ingest sources (iOwl\'s decode), and lists what sits at the top score.',
+  nav: "Recorded vs. inferred",
+  group: "What the Mac guessed",
+  kicker: "Where each fact came from",
+  title: "A copied fact and a guessed one look identical in the store",
+  blurb: "Each row has a confidence value and a bitmask naming the source that wrote it. Here you can see how the confidence values are spread, which source each bit stands for (iOwl’s decode), and what sits at the highest value.",
 };
 
 /* ---------- local helpers ---------- */

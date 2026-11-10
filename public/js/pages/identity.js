@@ -10,13 +10,11 @@ import { h, figure, statTile, bars, heatmap, stackedBar, hero, meter, legend,
 
 export const meta = {
   id: 'identity',
-  nav: 'The join table',
-  group: 'What it recorded',
-  kicker: 'Identity resolution',
-  title: 'One predicate links a handle, a face or an app to a named person',
-  blurb: 'Cross-store references in this graph flow mostly through one "same as" predicate, pointing into Contacts, ' +
-         'the Photos face clusters, EventKit and the app catalogue. This page measures where each pointer lands, which ' +
-         'ones still resolve against the source stores on this machine, and how often two of them land on the same person.',
+  nav: "Linked identities",
+  group: "What the Mac kept",
+  kicker: "Linking identities",
+  title: "One “same as” link ties a phone number, a face or an app back to a named person",
+  blurb: "Most references from this graph into other stores pass through a single “same as” predicate, pointing into Contacts, Photos face groups, EventKit and the app catalogue. This page checks where each reference leads, whether it still resolves against the stores on this Mac, and how often two references meet at one person.",
 };
 
 /* ---------- small local helpers ---------- */
@@ -119,7 +117,7 @@ function factCard(f) {
 
 async function openPerson(id) {
   const body = drawerShell();
-  body.appendChild(h('div', { class: 'loading', text: 'reading the store…' }));
+  body.appendChild(h('div', { class: 'loading', text: 'reading this Mac…' }));
   let d;
   try {
     d = await api('person', { id });

@@ -11,7 +11,11 @@ iOwl modifies iKnow. Changes from the original:
     (public/js/pages/reports.js);
   * added an organization watchlist (watchlist.example.txt);
   * added a test suite on made-up data (tests/);
-  * adjusted user-facing text and the sidebar credit (public/js/app.js,
-    public/index.html, server.py).
+  * rewrote the framing text in iOwl's own words: sidebar labels and groups,
+    page titles and introductions on every page, the landing headline,
+    notices, and the server's startup, sign-in and Full Disk Access messages;
+  * replaced MANUAL_FOR_YOUR_AGENT.md with a new guide written for iOwl;
+  * added a version number (api/version.py).
 
-All other files are iKnow's, renamed where they name the product.
+The detailed explanatory notes inside the viewer pages, and the code and its
+comments, are still largely iKnow's, renamed where they name the product.

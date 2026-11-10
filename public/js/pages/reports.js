@@ -14,7 +14,7 @@ import { h, statTile } from '../viz.js';
 export const meta = {
   id: 'reports',
   nav: 'Reports',
-  group: 'Start here',
+  group: 'Overview',
   kicker: 'Reports',
   title: 'Two reports from one set of measurements',
   blurb: 'A high-level brief for leadership and staff, and a technical report for the security team. '

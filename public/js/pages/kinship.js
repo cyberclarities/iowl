@@ -26,11 +26,11 @@ import { h, figure, statTile, bars, heatmap, hero, meter, tableView,
 
 export const meta = {
   id: 'kinship',
-  nav: 'Kinship scorecard',
-  group: 'What it concluded',
-  kicker: 'Inferred relationships',
-  title: 'Your Mac scores the people it knows on how likely each one is to be family, and writes the scores down',
-  blurb: 'One table on this machine holds a score per relationship column for each person the device chose to score. By the model\'s shipped feature list, its inputs include things you declared (a relation or a shared address on a Contacts card, a favourite, an emergency contact, Family Sharing) and how often you message, call and appear in photos with each person. Nobody typed the scores themselves.',
+  nav: "Relationship scores",
+  group: "What the Mac guessed",
+  kicker: "Relationship scores",
+  title: "Your Mac rates how likely each person is to be family, and stores the result",
+  blurb: "One table here gives each person the device chose to score a value in every relationship column. According to the model’s shipped list of features, it draws on things you stated yourself (a relation or shared address on a contact card, a favorite, an emergency contact, Family Sharing) and on how often you message, call and appear in photos with that person. No one entered the scores by hand.",
 };
 
 /* ---------- presentation helpers (no values, only formatting) ---------- */

@@ -27,12 +27,12 @@ import { originsOf, predicatesOf, dashDerived, augmentNote, scorecardSwitch, edg
 
 export const meta = {
   id: 'home',
-  nav: 'What your Mac knows',
-  group: 'Start here',
-  kicker: 'What your Mac knows about you',
-  title: 'What your Mac knows about you',
-  blurb: '',
-  headless: true,          // the graph card draws its own header — see app.js
+  nav: "At a glance",
+  group: "Overview",
+  kicker: "At a glance",
+  title: "What this Mac has worked out about you",
+  blurb: "",
+  headless: true,          // the graph card draws its own header; see app.js
 };
 
 /* ---------- this page's own caps, announced wherever one bites ---------- */
@@ -351,11 +351,11 @@ function graphCard(social, F, why, wd) {
   head.appendChild(h('h1', { class: 'home-title', text:
     `${plural(peopleInGraph, 'person', 'people')}, ${plural(c.records, 'event and other record', 'events and other records')}, `
     + `${plural(c.orgs, 'employer', 'employers')} and `
-    + `${plural(c.explicit_groups, 'stored group', 'stored groups')} — as the store on this Mac links them` }));
-  head.appendChild(note('Read live just now. Colour is what each node is to you: the stored group in red, '
-    + 'family and closeness by iOwl’s rules on the kinship scorecard. Size is how many rows in the store name '
-    + 'it. Click a node to read its record; drag to pin, double-click to unpin; pinch or ⌘-scroll to zoom, '
-    + 'or use the buttons in its corner.'));
+    + `${plural(c.explicit_groups, 'stored group', 'stored groups')}, connected the way this Mac connects them` }));
+  head.appendChild(note('Measured a moment ago. A node’s color says what it is to you: red for the stored group, '
+    + 'and family or closeness by iOwl’s rules applied to the relationship scores. Its size is the number of rows '
+    + 'in the store that mention it. Click a node to open its record; drag to pin it and double-click to let go; '
+    + 'pinch or ⌘-scroll to zoom, or use the corner buttons.'));
   box.appendChild(head);
 
   /* -- the key, with live counts; a hidden layer says so rather than vanishing -- */
@@ -576,9 +576,9 @@ function graphCard(social, F, why, wd) {
     selected = node;
     panel.textContent = '';
     if (!node) {
-      panel.appendChild(h('div', { class: 'card-note', text: 'How to read this' }));
-      panel.appendChild(note('Click a node, or Tab to one and press Enter. Every name here is a row in '
-        + 'the store; nothing is summarised that is not in the record.'));
+      panel.appendChild(h('div', { class: 'card-note', text: 'Reading the graph' }));
+      panel.appendChild(note('Click a node, or Tab to one and press Enter. Every name comes from a row in '
+        + 'the store, and nothing appears here that the record does not hold.'));
       panel.appendChild(keyList([
         ['node size', 'rows in the store naming it'],
         ['node colour', 'what it is to you — see the key; family and closeness are iOwl’s rules on the scorecard'],

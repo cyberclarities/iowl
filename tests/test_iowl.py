@@ -264,6 +264,14 @@ class ServerTest(unittest.TestCase):
             status, _h, _b = self.get(path)
             self.assertEqual(status, 200, path)
 
+    def test_version(self):
+        from api.version import VERSION
+        status, _h, body = self.get("/api/version")
+        self.assertEqual(status, 200)
+        self.assertIn(f'"{VERSION}"'.encode(), body)
+        _s, _h, page = self.get("/api/report?kind=brief")
+        self.assertIn(f"iOwl {VERSION}".encode(), page)
+
     def test_findings_json(self):
         status, _h, body = self.get("/api/findings?terms=example.org")
         self.assertEqual(status, 200)

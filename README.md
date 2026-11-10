@@ -81,6 +81,14 @@ python3 server.py --bundle /path/to/extracted    # graph/, ontology/, sources/
 On an extracted copy, FileVault and Full Disk Access are reported as not
 measured: a copy says nothing about the machine it came from.
 
+## Asking an AI agent
+
+`MANUAL_FOR_YOUR_AGENT.md` is a guide for an AI agent with a shell on your Mac.
+It makes the agent ask whether you trust its provider before it reads
+anything, points it at iOwl's counts-only endpoints first, and covers the raw
+stores for questions iOwl doesn't answer. Unlike iOwl in the browser, an agent
+sends what it reads to wherever its model runs.
+
 ## The rules stay readable
 
 - `api/findings.py` holds every measurement and every rule.
