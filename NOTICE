@@ -1,0 +1,17 @@
+iOwl
+Built on iKnow by the Eighth Rank (https://github.com/8rank/iKnow),
+licensed under the Apache License, Version 2.0.
+
+iOwl modifies iKnow. Changes from the original:
+  * renamed to iOwl, with a new mark (public/logo.svg);
+  * added the findings engine (api/findings.py) and app classification rules
+    (api/catalog.py);
+  * added the high-level brief and technical report (api/report.py,
+    public/css/report.css, public/js/report.js) and the Reports page
+    (public/js/pages/reports.js);
+  * added an organization watchlist (watchlist.example.txt);
+  * added a test suite on made-up data (tests/);
+  * adjusted user-facing text and the sidebar credit (public/js/app.js,
+    public/index.html, server.py).
+
+All other files are iKnow's, renamed where they name the product.

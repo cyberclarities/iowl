@@ -1,0 +1,8 @@
+# iOwl watchlist: one term per line. Copy this file to watchlist.txt and edit it.
+# The reports count how many times each term appears in the graph, the
+# interaction log, Calendar and Contacts. They never show the matching values,
+# and message text is never searched. Lines starting with # are ignored.
+#
+# example.org
+# Example Mission
+# field team

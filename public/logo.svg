@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="iOwl: an owl with wide, watchful eyes">
+  <rect x="0.5" y="0.5" width="63" height="63" rx="14" fill="#1b1f27" stroke="#ffffff" stroke-opacity="0.14"/>
+  <!-- head and ear tufts -->
+  <path d="M14 16L22 21Q32 17 42 21L50 16L48.5 28Q51 34 49 41Q45 52 32 53Q19 52 15 41Q13 34 15.5 28Z" fill="#2c3442" stroke="#eef1f5" stroke-width="2.2" stroke-linejoin="round"/>
+  <!-- eyes -->
+  <circle cx="24.5" cy="33" r="7.6" fill="#eef1f5"/>
+  <circle cx="39.5" cy="33" r="7.6" fill="#eef1f5"/>
+  <circle cx="25.6" cy="33.4" r="3.7" fill="#1b1f27"/>
+  <circle cx="40.6" cy="33.4" r="3.7" fill="#1b1f27"/>
+  <circle cx="26.8" cy="32.2" r="1.1" fill="#ffffff"/>
+  <circle cx="41.8" cy="32.2" r="1.1" fill="#ffffff"/>
+  <!-- beak -->
+  <path d="M29.4 41.5L34.6 41.5L32 46.5Z" fill="#eda100"/>
+</svg>
