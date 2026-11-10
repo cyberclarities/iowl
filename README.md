@@ -16,6 +16,31 @@ which opens that graph on your own Mac and shows you what is in it. iOwl keeps
 everything iKnow does and adds what a security team needs next: findings, and
 two reports you can hand to someone else.
 
+## Built on iKnow, with thanks
+
+iOwl would not exist without [iKnow](https://github.com/8rank/iKnow), built by
+[the Eighth Rank](https://8rank.ai). They did the hard part.
+
+Apple ships almost nothing about this graph: no documentation, a one-line man
+page, and no screen where you can look at it. iKnow went in anyway. They found
+where every store lives, decoded the codes, and worked out which columns
+quietly mislead: the confidence score that mostly names a source, the bitmask
+you can't group by, the direction column you can't read off Apple's own enum.
+Every iOwl finding stands on that forensic work.
+
+They also got the design right. Local only. Read-only on every handle. A fresh
+token at every start. Redaction that fails closed. Nothing written to disk. An
+agent guide that makes the AI ask permission before it reads a single row.
+Those choices are why iOwl could be built for security work at all, and we kept
+every one of them.
+
+iOwl adds the reporting layer. The idea, the map of the stores and most of the
+code underneath are theirs.
+
+If iOwl is useful to you, read
+[their write-up](https://8rank.ai/game/apple-intelligence-personal-knowledge-graph)
+and star [the iKnow repository](https://github.com/8rank/iKnow).
+
 ## What iOwl adds
 
 - **A findings engine.** A fixed set of measurements and rules that turn the

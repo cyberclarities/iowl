@@ -198,8 +198,9 @@ function buildNav() {
       [h('span', { text: 'built on ' }), h('span', { text: 'iKnow' }),
        h('span', { class: 'the', text: ' by the Eighth Rank' })]),
     h('div', { class: 'sidebar-foot-line' }, [
-      h('span', { text: 'iOwl extends iKnow, which is LLM-generated and may not be 100% accurate. '
-                      + 'Check a finding against its source before you rely on it.' }),
+      h('span', { text: 'The idea, the map of the stores and most of this code are iKnow’s. iOwl adds '
+                      + 'the reports. iKnow is LLM-generated, so check a finding against its source before '
+                      + 'you rely on it.' }),
     ]),
   ]));
   nav.appendChild(h('div', { class: 'sidebar-redact' }, [
