@@ -5,7 +5,7 @@ print it in their footer and scope table (findings.VERSION), so the app and
 anything printed from it always agree.
 """
 
-VERSION = "0.2"
+VERSION = "0.3"
 
 
 def handler(params):
