@@ -3,7 +3,7 @@
 The sidebar switch adds `redact=1` to every API request, and the server passes
 the payload through `scrub` before it is serialised. People's names, phone
 numbers, mail addresses and postal addresses are swapped for numbered
-stand-ins (Person 17, Phone 4, Email 9, Address 2) and nothing else is touched:
+stand-ins (Person 17, Phone 4, Email 9, Address 2, Group chat 3) and nothing else is touched:
 numbers, ids, dates, predicates and ontology labels go through as they are, so
 every graph keeps its topology and every count its value. The real strings
 never leave this process, so the browser on the shared screen never holds them.
@@ -89,9 +89,10 @@ EVENT_LOCATION = "PS733"
 LABELS = {
     "owner": "Owner", "person": "Person", "address": "Address",
     "city": "City", "postcode": "Postcode", "phone": "Phone", "email": "Email",
+    "group": "Group chat",
 }
 # First claim wins when one string could be two things.
-PRIORITY = ("owner", "person", "address", "city", "postcode")
+PRIORITY = ("owner", "person", "address", "city", "postcode", "group")
 
 REFRESH = 300          # seconds between harvests
 MIN_EMBED = 3          # shorter one-word names are replaced only as the exact value
@@ -288,13 +289,35 @@ def _harvest(klass):
 
     def siri():
         if db.has_table(SIRI, "entities"):
-            for r in db.query(SIRI, "select type, json_extract(fields, '$.name') as name "
+            for r in db.query(SIRI, "select type, id, json_extract(fields, '$.name') as name "
                                     "from entities where type in ('Person', 'PersonHandle')"):
                 if r["type"] == "Person":
                     add("person", r["name"])
-                else:
-                    phone(r["name"])
+                    continue
+                # A handle is a number or an address, except where the app
+                # donated a display name or a user name in its place (social
+                # apps do). Those are people.
+                for v in (r["name"], r["id"]):
+                    phone(v)
+                    if (isinstance(v, str) and "@" not in v and not _PHONE_SHAPE.match(v.strip())
+                            and any(c.isalpha() for c in v)):
+                        add("person", v)
     _read("the Siri view", siri, unread)
+
+    # Group chat names. A group is often named for its members or a place
+    # ("Smith family", "Lake house"), and the messaging page lists them, so
+    # they go as their own kind. Matched only as the whole value: a group
+    # called "Golf" must not take the word out of every other sentence.
+    def groups():
+        if db.has_table(SIRI, "entities"):
+            for r in db.query(SIRI, "select json_extract(fields, '$.name') as name "
+                                    "from entities where type = 'MessageGroup'"):
+                add("group", r["name"])
+        if db.has_table(CHAT, "chat"):
+            for r in db.query(CHAT, "select display_name as name from chat "
+                                    "where display_name is not null and display_name <> ''"):
+                add("group", r["name"])
+    _read("the group chat names", groups, unread)
 
     return found, phones, unread
 
@@ -338,6 +361,21 @@ class _Lexicon:
         for kind in PRIORITY:
             for value in found[kind]:
                 toks = _tokens(value)
+                if kind == "group":
+                    # Matched only as the whole value, so a group name is kept
+                    # off the list only when it is, character for character,
+                    # one of the page's own words. An emoji or a symbol makes
+                    # it a name of its own.
+                    if not toks or (toks in phrases and re.fullmatch(r"[\w\s]+", value)):
+                        continue
+                    # A Telegram channel posts as itself, so its name can be
+                    # on the list already as a person, spelled with other
+                    # spacing. The whole-value match catches either spelling.
+                    key = " ".join(value.split()).casefold()
+                    if key not in claimed:
+                        self.exact.setdefault(value, kind)
+                    self.whole.setdefault(key, kind)
+                    continue
                 if not toks or toks in phrases or (len(toks) == 1 and toks[0] in words):
                     continue
                 # A name or a street has letters in it. One that does not would

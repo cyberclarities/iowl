@@ -15,6 +15,7 @@ Standard library only, like the rest of iOwl.
 """
 
 import html.parser
+import json
 import os
 import re
 import shutil
@@ -143,6 +144,51 @@ class FindingsTest(unittest.TestCase):
 
     def test_no_store_gaps(self):
         self.assertEqual([g for g in self.gaps if g["kind"] != "redact"], [])
+
+
+class MessagingTest(unittest.TestCase):
+    """The messaging page: per-app counts from the Siri view, and the share-safe
+    switch replacing group chat names, which the name harvest alone missed."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = tempfile.mkdtemp(prefix="iowl-fixture-")
+        make_fixture.build(cls.tmp)
+        db.configure(bundle=cls.tmp)
+        db.begin()
+        from api import messaging, redact
+        cls.data = messaging.handler({})
+        cls.safe = redact.scrub(cls.data)
+        db.close()
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.tmp, ignore_errors=True)
+
+    def app(self, payload, key):
+        return next(a for a in payload["apps"] if a["key"] == key)
+
+    def test_per_app_counts(self):
+        sig, wa, teams = (self.app(self.data, k) for k in ("signal", "whatsapp", "teams"))
+        self.assertEqual((sig["interactions"], sig["people"], sig["group_chats"]), (6, 3, 1))
+        self.assertEqual((wa["interactions"], wa["people"], wa["other_devices"]), (4, 2, 2))
+        self.assertEqual((teams["interactions"], teams["group_chats"]), (3, 2))
+        self.assertEqual(sig["sent"] + sig["received"] + sig["requests"], sig["interactions"])
+
+    def test_watched_apps_always_listed(self):
+        keys = {a["key"] for a in self.data["apps"]}
+        for k in ("signal", "whatsapp", "messages", "telegram", "phone", "facetime", "messenger"):
+            self.assertIn(k, keys)
+        self.assertEqual(self.app(self.data, "telegram")["status"], "no trace")
+
+    def test_group_names_redacted(self):
+        before = json.dumps(self.data)
+        after = json.dumps(self.safe)
+        for name in ("Signal Group Secret", "Acme Mission Field Team"):
+            self.assertIn(name, before)
+            self.assertNotIn(name, after)
+        self.assertIn("Group chat", after)
+        self.assertNotIn("7700 900123", after)
 
 
 class ReportTest(unittest.TestCase):

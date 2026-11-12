@@ -25,6 +25,7 @@ import * as overview from './pages/overview.js';
 import * as social from './pages/social.js';
 import * as kinship from './pages/kinship.js';
 import * as comms from './pages/comms.js';
+import * as messaging from './pages/messaging.js';
 import * as identity from './pages/identity.js';
 import * as calendar from './pages/calendar.js';
 import * as faces from './pages/faces.js';
@@ -35,7 +36,7 @@ import * as exposure from './pages/exposure.js';
 import * as reports from './pages/reports.js';
 
 // Order here is the order within each sidebar group.
-const PAGES = [home, reports, kinship, faces, certainty, social, comms, calendar,
+const PAGES = [home, reports, kinship, faces, certainty, social, comms, messaging, calendar,
                identity, retractions, overview, device, exposure];
 
 const GROUPS = ['Overview', 'What the Mac guessed', 'What the Mac kept', 'Under the hood'];
